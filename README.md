@@ -2,7 +2,7 @@
 
 First, run the development server:
 
-npm run dev
+- npm run dev
 
 http://localhost:3000/
 

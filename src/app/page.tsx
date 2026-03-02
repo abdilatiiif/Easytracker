@@ -1,3 +1,3 @@
 export default function Home() {
-  return <div> Easy tracker start</div>;
+  return <div className="bg-red-200"> Easy tracker start</div>;
 }
