@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navigation from "../components/Navigation/Navigation";
 import Footer from "@/components/Footer";
+import { TopHeader } from "@/components/TopHeader";
 
 export const metadata: Metadata = {
   title: "EasyTracker ",
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Navigation />
+        <TopHeader />
         {children}
         <Footer />
       </body>

@@ -7,3 +7,6 @@ First, run the development server:
 http://localhost:3000/
 
 ## Next js with tailwind
+
+- svg from lucide react - https://lucide.dev/
+- ferdig laget komponenter kommer fra - https://ui.shadcn.com/
