@@ -1,4 +1,15 @@
 import getAll from "@/Actions/getAll";
+import { BrikkeContainer } from "@/components/adminCompoents/BrikkeContainer";
+import { BrikkeHeader } from "@/components/adminCompoents/BrikkeHeader";
+import { Card } from "@/components/ui/card";
+
+interface BeholderData {
+  id: string;
+  externalSystem: string;
+  locationId: string;
+  locationName: string;
+  typeName: string;
+}
 
 export default async function page() {
   const resultat = await getAll();
@@ -13,17 +24,28 @@ export default async function page() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Nedgravde beholdere</h1>
-
-      <div className="mb-4">
-        <p className="text-gray-600">Totalt antall: {resultat.data.length}</p>
-        {resultat.data.map((item: object, index: number) => (
-          <div key={index} className="p-2 border-b border-gray-200">
-            <p>{JSON.stringify(item)}</p>
-          </div>
-        ))}
+    <div className="container mx-auto pl-60 pt-20 pr-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Nedgravde beholdere
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Totalt antall:{" "}
+            <span className="font-semibold">{resultat.data.length}</span>{" "}
+            beholdere
+          </p>
+        </div>
       </div>
+
+      <Card className="w-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+        <BrikkeHeader />
+        <div className="max-h-[70vh] overflow-y-auto">
+          {resultat.data.map((item: BeholderData, index: number) => (
+            <BrikkeContainer key={index} data={item} />
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
