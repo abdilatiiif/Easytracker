@@ -2,27 +2,26 @@
 
 import { LayoutGrid, Microchip, House, BarChart3, Users } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 function Menu() {
-  const searchParams = useSearchParams();
-  const activeLink = searchParams.get("active") || "dashboard";
+  const pathname = usePathname();
 
   const menuItems = [
-    { icon: LayoutGrid, label: "Dashbord", active: activeLink },
+    { icon: LayoutGrid, label: "Dashbord", href: "/dashbord" },
     {
       icon: Microchip,
       label: "Brikker",
       badge: "12+",
-      active: activeLink,
+      href: "/brikker",
     },
     {
       icon: House,
       label: "Adressestatus",
-      active: activeLink === "adressestatus",
+      href: "/adressestatus",
     },
-    { icon: BarChart3, label: "Analyse", active: activeLink === "analyse" },
-    { icon: Users, label: "Team", active: activeLink === "team" },
+    { icon: BarChart3, label: "Analyse", href: "/analyse" },
+    { icon: Users, label: "Team", href: "/team" },
   ];
 
   return (
@@ -37,9 +36,8 @@ function Menu() {
             <button
               className={
                 `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer` +
-                (item.active
-                  ? " bg-green-500 text-primary-foreground"
-                  : " text-muted-foreground hover:bg-secondary hover:text-foreground")
+                (item.href === pathname &&
+                  " bg-green-500 text-primary-foreground")
               }
             >
               <item.icon className="h-5 w-5" />

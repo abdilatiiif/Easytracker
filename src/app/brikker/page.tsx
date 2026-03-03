@@ -18,7 +18,7 @@ export default async function page() {
 
       <div className="mb-4">
         <p className="text-gray-600">Totalt antall: {resultat.data.length}</p>
-        {resultat.data.map((item, index) => (
+        {resultat.data.map((item: object, index: number) => (
           <div key={index} className="p-2 border-b border-gray-200">
             <p>{JSON.stringify(item)}</p>
           </div>
