@@ -24,13 +24,10 @@ export default async function page() {
   }
 
   return (
-    <div className="container mx-auto pl-60 pt-20 pr-6">
+    <div className="container mx-auto pl-60 pt-15 pr-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Nedgravde beholdere
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-2">
             Totalt antall:{" "}
             <span className="font-semibold">{resultat.data.length}</span>{" "}
             beholdere
