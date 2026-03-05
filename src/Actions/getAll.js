@@ -28,6 +28,7 @@ export default async function getAll() {
     }
 
     const data = await res.json();
+    console.log("Fetched data:", data);
 
     return { data, error: null };
   } catch (error) {
