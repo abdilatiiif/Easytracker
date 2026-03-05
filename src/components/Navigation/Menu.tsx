@@ -20,9 +20,9 @@ function Menu() {
     { icon: LayoutGrid, label: "Dashbord", href: "/dashbord" },
     {
       icon: Microchip,
-      label: "Brikker",
+      label: "Beholdere",
       badge: "12+",
-      href: "/brikker",
+      href: "/beholdere",
     },
     {
       icon: House,

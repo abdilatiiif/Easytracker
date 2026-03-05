@@ -3,13 +3,16 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import Image from "next/image";
 
 interface BeholderData {
   id: string;
   externalSystem: string;
   locationId: string;
-  locationName: string;
-  typeName: string;
+  stasjonNavn: string;
+  fraksjonNavn: string;
+  fraksjonType: number;
+  anleggNavn: string;
 }
 
 export function BrikkeContainer({ data }: { data: BeholderData }) {
@@ -39,19 +42,27 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
           {data.externalSystem}
         </Badge>
       </div>
+
       <div
-        className="text-sm font-mono text-muted-foreground truncate"
-        title={data.locationId}
+        className="text-sm font-mono text-foregroundtruncate"
+        title={data.anleggNavn}
       >
-        {data.locationId.slice(0, 8)}...
+        {data.anleggNavn}
       </div>
       <div className="text-sm font-medium text-foreground">
-        {data.locationName}
+        {data.stasjonNavn}
       </div>
-      <div>
+      <div className="flex justify-center items-center flex-col">
         <Badge className="bg-green-100 text-green-800 border-green-200 font-medium">
-          {data.typeName}
+          {data.fraksjonNavn}
         </Badge>
+        <Image
+          width={data.fraksjonType === 5 ? 80 : 40}
+          height={data.fraksjonType === 5 ? 80 : 40}
+          src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonType}.png`}
+          alt={data.fraksjonNavn}
+          className="rounded-2xl"
+        />
       </div>
     </div>
   );
