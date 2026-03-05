@@ -20,7 +20,7 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
 
   return (
     <div
-      className={`grid grid-cols-6 gap-4 px-6 py-4 items-center border-b border-border/50 transition-all duration-200 cursor-pointer
+      className={`w-full grid grid-cols-6 gap-4 px-6 py-4 items-center border-b border-border/50 transition-all duration-200 cursor-pointer
         ${isChecked ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-secondary/40"}`}
     >
       <Checkbox

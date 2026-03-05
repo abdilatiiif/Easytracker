@@ -17,7 +17,7 @@ function Menu() {
   const pathname = usePathname();
 
   const menuItems = [
-    { icon: LayoutGrid, label: "Dashbord", href: "/dashbord" },
+    { icon: LayoutGrid, label: "Dashbord", href: "/" },
     {
       icon: Microchip,
       label: "Beholdere",
@@ -57,7 +57,7 @@ function Menu() {
                 }
               >
                 <item.icon className="h-5 w-5" />
-                <Link href={`/${item.label.toLowerCase()}`}>{item.label}</Link>
+                <Link href={item.href}>{item.label}</Link>
                 {item.badge && (
                   <span className="ml-auto rounded-full bg-green-400 text-[10px] font-semibold p-2 text-primary-foreground">
                     {item.badge}

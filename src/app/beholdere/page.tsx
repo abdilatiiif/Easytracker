@@ -5,6 +5,7 @@ import getAll from "@/Actions/getAll";
 import { BrikkeContainer } from "@/components/adminCompoents/BrikkeContainer";
 import { BrikkeHeader } from "@/components/adminCompoents/BrikkeHeader";
 import { Card } from "@/components/ui/card";
+import Filter from "@/components/adminCompoents/Filter";
 
 interface BeholderData {
   id: string;
@@ -84,6 +85,7 @@ export default function Page() {
         </div>
       </div>
 
+      <Filter data={sortedData} />
       <Card className="w-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
         <div className="max-h-[70vh] overflow-y-auto">
