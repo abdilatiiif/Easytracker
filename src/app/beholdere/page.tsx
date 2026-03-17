@@ -41,6 +41,7 @@ export default function Page() {
           setError(res.error);
         } else {
           setData(res.data);
+          console.log("Fetched data:", res.data); // Legg til logging for å se dataen som hentes inn
         }
       } catch (error) {
         setError("Feil ved lasting av data");
@@ -52,24 +53,24 @@ export default function Page() {
     fetchData();
   }, []);
 
-  const normalize = (value: string) => value.trim().toLowerCase();
+  const filterVerdi = (value: string) => value.trim().toLowerCase();
 
   // Filtrer data live basert på valgt filterverdi
   const filteredData = data.filter((item) => {
     const externalSystemMatch =
-      normalize(filters.externalSystem) === "" ||
+      filterVerdi(filters.externalSystem) === "" ||
       item.externalSystem
         .toLowerCase()
-        .includes(normalize(filters.externalSystem));
+        .includes(filterVerdi(filters.externalSystem));
 
 
     const stationMatch =
-      normalize(filters.station) === "" ||
-      item.stasjonNavn.toLowerCase().includes(normalize(filters.station));
+      filterVerdi(filters.station) === "" ||
+      item.stasjonNavn.toLowerCase().includes(filterVerdi(filters.station));
 
     const anleggMatch =
-      normalize(filters.anlegg) === "" ||
-      item.anleggNavn.toLowerCase().includes(normalize(filters.anlegg));
+      filterVerdi(filters.anlegg) === "" ||
+      item.anleggNavn.toLowerCase().includes(filterVerdi(filters.anlegg));
 
     const fraksjonMatch =
       filters.fraksjoner.length === 0 ||
