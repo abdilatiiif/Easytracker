@@ -34,7 +34,7 @@ function Column({
   return (
     <div
       onClick={() => onSort(column)}
-      className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
+      className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center cursor-pointer hover:text-foreground transition-colors"
     >
       {label}
       {getIcon(column)}
@@ -77,7 +77,7 @@ export function BrikkeHeader({ onSort, sortBy, sortAsc }: BrikkeHeaderProps) {
         />
         <div className="flex justify-center">
           <Column
-            label="Type"
+            label="Avfallstype"
             column="fraksjonNavn"
             onSort={onSort}
             sortBy={sortBy}

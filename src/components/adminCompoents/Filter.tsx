@@ -88,7 +88,7 @@ export default function Filter({ data = [] }: FilterProps) {
 
         <SheetFooter>
           <Button type="submit" className="w-full">
-            Søk
+            Reset Filter
           </Button>
           <SheetClose asChild>
             <Button variant="outline" className="w-full">
