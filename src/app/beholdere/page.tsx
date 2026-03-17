@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import getAll from "@/Actions/getAll";
 import { BrikkeContainer } from "@/components/adminCompoents/BrikkeContainer";
 import { BrikkeHeader } from "@/components/adminCompoents/BrikkeHeader";
@@ -20,6 +21,9 @@ interface BeholderData {
 }
 
 export default function Page() {
+  const searchParams = useSearchParams();
+  const globalQuery = (searchParams.get("q") ?? "").trim().toLowerCase();
+
   const [data, setData] = useState<BeholderData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,14 +59,29 @@ export default function Page() {
 
   const filterVerdi = (value: string) => value.trim().toLowerCase();
 
-  // Filtrer data live basert på valgt filterverdi
-  const filteredData = data.filter((item) => {
+  // Filtrer data: først universelt søk fra header, så spesifikke filtre
+  const afterGlobalSearch = globalQuery
+    ? data.filter((item) => {
+        const searchable = [
+          item.id,
+          item.externalSystem,
+          item.locationName,
+          item.stasjonNavn,
+          item.fraksjonNavn,
+          item.anleggNavn,
+        ]
+          .join(" ")
+          .toLowerCase();
+        return searchable.includes(globalQuery);
+      })
+    : data;
+
+  const filteredData = afterGlobalSearch.filter((item) => {
     const externalSystemMatch =
       filterVerdi(filters.externalSystem) === "" ||
       item.externalSystem
         .toLowerCase()
         .includes(filterVerdi(filters.externalSystem));
-
 
     const stationMatch =
       filterVerdi(filters.station) === "" ||
@@ -76,12 +95,7 @@ export default function Page() {
       filters.fraksjoner.length === 0 ||
       filters.fraksjoner.includes(item.fraksjonNavn);
 
-    return (
-      externalSystemMatch &&
-      stationMatch &&
-      anleggMatch &&
-      fraksjonMatch
-    );
+    return externalSystemMatch && stationMatch && anleggMatch && fraksjonMatch;
   });
 
   // Sortér filtrert data basert på sortBy og sortAsc
