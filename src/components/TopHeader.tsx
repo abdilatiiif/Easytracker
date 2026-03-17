@@ -17,7 +17,7 @@ export function TopHeader() {
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Søk etter brikke..."
+            placeholder="Søk etter beholder..."
             className="h-10 bg-secondary pl-10 pr-16 text-sm"
           />
           <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
