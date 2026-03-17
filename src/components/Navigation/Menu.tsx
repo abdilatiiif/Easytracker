@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import getAll from "@/Actions/getAll";
 import {
   LayoutGrid,
   Microchip,
@@ -16,12 +18,30 @@ import { usePathname } from "next/navigation";
 function Menu() {
   const pathname = usePathname();
 
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await getAll();
+        if (res.error) {
+          console.error("Fetch error from menu:", res.error);
+        } else {
+          setData(res.data.length > 0 ? res.data : []); // Sørg for at data er en array
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+    fetchData();
+  }, []);
+
   const menuItems = [
     { icon: LayoutGrid, label: "Dashbord", href: "/" },
     {
       icon: Microchip,
       label: "Beholdere",
-      badge: "12+",
+      badge: data.length > 0 ? `${data.length}+` : 0,
       href: "/beholdere",
     },
     {

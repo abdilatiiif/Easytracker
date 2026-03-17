@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import Image from "next/image";
+import { SquarePen } from "lucide-react";
 
 interface BeholderData {
   id: string;
@@ -16,32 +16,26 @@ interface BeholderData {
 }
 
 export function BrikkeContainer({ data }: { data: BeholderData }) {
-  const [isChecked, setIsChecked] = useState(false);
-
   return (
     <div
-      className={`w-full grid grid-cols-6 gap-4 px-6 py-4 items-center border-b border-border/50 transition-all duration-200 cursor-pointer
-        ${isChecked ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-secondary/40"}`}
+      className={`w-full grid grid-cols-6 gap-4 px-6 py-4 items-center border-b border-border/50 transition-all duration-200 cursor-pointer hover:bg-accent rounded-lg`}
     >
-      <Checkbox
-        checked={isChecked}
-        onCheckedChange={(checked) => setIsChecked(checked as boolean)}
-        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-      />
+      <SquarePen className="data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
       <div
         className="text-sm font-mono text-foreground truncate"
         title={data.id}
       >
         {data.id.slice(0, 8)}...
       </div>
-      <div>
+
+      {/*<div>
         <Badge
           variant="outline"
           className="bg-blue-50 text-blue-700 border-blue-200 font-medium"
         >
           {data.externalSystem}
         </Badge>
-      </div>
+      </div>*/}
 
       <div
         className="text-sm font-mono text-foregroundtruncate"

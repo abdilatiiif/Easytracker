@@ -54,13 +54,14 @@ export function BrikkeHeader({ onSort, sortBy, sortAsc }: BrikkeHeaderProps) {
           sortBy={sortBy}
           sortAsc={sortAsc}
         />
-        <Column
+
+        {/* <Column
           label="Eksternt System"
           column="externalSystem"
           onSort={onSort}
           sortBy={sortBy}
           sortAsc={sortAsc}
-        />
+        />*/}
         <Column
           label="Anleggsnavn"
           column="anleggNavn"

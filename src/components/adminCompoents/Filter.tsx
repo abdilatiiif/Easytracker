@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,21 +17,55 @@ import {
 } from "@/components/ui/sheet";
 import { Funnel } from "lucide-react";
 
-interface FilterProps {
-  data?: { fraksjonNavn: string }[]; //
+export interface FilterValues {
+  externalSystem: string;
+  location: string;
+  station: string;
+  anlegg: string;
+  fraksjoner: string[];
 }
 
-export default function Filter({ data = [] }: FilterProps) {
-  console.log("Filter data:", data); // Debug: Sjekk hva som sendes inn
+interface FilterProps {
+  data?: { fraksjonNavn: string }[];
+  value: FilterValues;
+  onChange: (value: FilterValues) => void;
+}
 
-  const typeAvFall = [...new Set(data.map((item) => item.fraksjonNavn))];
+export default function Filter({ data = [], value, onChange }: FilterProps) {
+  const typeAvFall = useMemo(
+    () => [...new Set(data.map((item) => item.fraksjonNavn))],
+    [data],
+  );
 
-  console.log("Unike fraksjonNavn:", typeAvFall); // Debug: Sjekk unike fraksjonNavn
+  const toggleFraksjon = (fraksjon: string, checked: boolean) => {
+    if (checked) {
+      onChange({ ...value, fraksjoner: [...value.fraksjoner, fraksjon] });
+      return;
+    }
+
+    onChange({
+      ...value,
+      fraksjoner: value.fraksjoner.filter((item) => item !== fraksjon),
+    });
+  };
+
+  const handleReset = () => {
+    onChange({
+      externalSystem: "",
+      location: "",
+      station: "",
+      anlegg: "",
+      fraksjoner: [],
+    });
+  };
 
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button className="text-xs font-semibold uppercase" variant="outline">
+        <Button
+          className="text-xs font-semibold uppercase cursor-pointer"
+          variant="outline"
+        >
           Filter <Funnel className="ml-2" size={16} />
         </Button>
       </SheetTrigger>
@@ -43,28 +78,30 @@ export default function Filter({ data = [] }: FilterProps) {
         </SheetHeader>
 
         <div className="grid p-5 flex-1 auto-rows-min gap-6 py-4">
-          {/* External System Filter */}
-          <div className="grid gap-3">
-            <Label htmlFor="external-system">External System</Label>
-            <Input id="external-system" placeholder="Søk etter system..." />
-          </div>
-
-          {/* Location Filter */}
-          <div className="grid gap-3">
-            <Label htmlFor="location">Lokasjon</Label>
-            <Input id="location" placeholder="Søk etter lokasjon..." />
-          </div>
-
           {/* Station Filter */}
           <div className="grid gap-3">
             <Label htmlFor="station">Stasjon</Label>
-            <Input id="station" placeholder="Søk etter stasjon..." />
+            <Input
+              id="station"
+              placeholder="Søk etter stasjon..."
+              value={value.station}
+              onChange={(event) =>
+                onChange({ ...value, station: event.target.value })
+              }
+            />
           </div>
 
           {/* Anlegg Filter */}
           <div className="grid gap-3">
             <Label htmlFor="anlegg">Anlegg</Label>
-            <Input id="anlegg" placeholder="Søk etter anlegg..." />
+            <Input
+              id="anlegg"
+              placeholder="Søk etter anlegg..."
+              value={value.anlegg}
+              onChange={(event) =>
+                onChange({ ...value, anlegg: event.target.value })
+              }
+            />
           </div>
 
           {/* Fraksjon Checkboxes */}
@@ -73,7 +110,13 @@ export default function Filter({ data = [] }: FilterProps) {
             <div className="space-y-2">
               {typeAvFall.map((fraksjon, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <Checkbox id={`fraksjon-${index}`} />
+                  <Checkbox
+                    id={`fraksjon-${index}`}
+                    checked={value.fraksjoner.includes(fraksjon)}
+                    onCheckedChange={(checked) =>
+                      toggleFraksjon(fraksjon, checked === true)
+                    }
+                  />
                   <label
                     htmlFor={`fraksjon-${index}`}
                     className="text-sm cursor-pointer"
@@ -87,7 +130,7 @@ export default function Filter({ data = [] }: FilterProps) {
         </div>
 
         <SheetFooter>
-          <Button type="submit" className="w-full">
+          <Button type="button" className="w-full" onClick={handleReset}>
             Reset Filter
           </Button>
           <SheetClose asChild>

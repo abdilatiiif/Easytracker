@@ -5,7 +5,7 @@ import getAll from "@/Actions/getAll";
 import { BrikkeContainer } from "@/components/adminCompoents/BrikkeContainer";
 import { BrikkeHeader } from "@/components/adminCompoents/BrikkeHeader";
 import { Card } from "@/components/ui/card";
-import Filter from "@/components/adminCompoents/Filter";
+import Filter, { FilterValues } from "@/components/adminCompoents/Filter";
 
 interface BeholderData {
   id: string;
@@ -25,6 +25,13 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<keyof BeholderData>("id");
   const [sortAsc, setSortAsc] = useState(true);
+  const [filters, setFilters] = useState<FilterValues>({
+    externalSystem: "",
+    location: "",
+    station: "",
+    anlegg: "",
+    fraksjoner: [],
+  });
 
   useEffect(() => {
     async function fetchData() {
@@ -45,8 +52,39 @@ export default function Page() {
     fetchData();
   }, []);
 
-  // Enkelt: sortér data basert på sortBy og sortAsc
-  const sortedData = [...data].sort((a, b) => {
+  const normalize = (value: string) => value.trim().toLowerCase();
+
+  // Filtrer data live basert på valgt filterverdi
+  const filteredData = data.filter((item) => {
+    const externalSystemMatch =
+      normalize(filters.externalSystem) === "" ||
+      item.externalSystem
+        .toLowerCase()
+        .includes(normalize(filters.externalSystem));
+
+
+    const stationMatch =
+      normalize(filters.station) === "" ||
+      item.stasjonNavn.toLowerCase().includes(normalize(filters.station));
+
+    const anleggMatch =
+      normalize(filters.anlegg) === "" ||
+      item.anleggNavn.toLowerCase().includes(normalize(filters.anlegg));
+
+    const fraksjonMatch =
+      filters.fraksjoner.length === 0 ||
+      filters.fraksjoner.includes(item.fraksjonNavn);
+
+    return (
+      externalSystemMatch &&
+      stationMatch &&
+      anleggMatch &&
+      fraksjonMatch
+    );
+  });
+
+  // Sortér filtrert data basert på sortBy og sortAsc
+  const sortedData = [...filteredData].sort((a, b) => {
     const aVerdi = a[sortBy];
     const bVerdi = b[sortBy];
 
@@ -79,13 +117,13 @@ export default function Page() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-sm text-muted-foreground mt-2">
-            Totalt antall: <span className="font-semibold">{data.length}</span>{" "}
-            beholdere
+            Viser <span className="font-semibold">{sortedData.length}</span> av{" "}
+            <span className="font-semibold">{data.length}</span> beholdere
           </p>
         </div>
       </div>
 
-      <Filter data={sortedData} />
+      <Filter data={data} value={filters} onChange={setFilters} />
       <Card className="w-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
         <div className="max-h-[70vh] overflow-y-auto">
