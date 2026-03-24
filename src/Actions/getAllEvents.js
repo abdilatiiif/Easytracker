@@ -28,7 +28,7 @@ export default async function getAllEvents() {
     }
 
     const data = await res.json();
-    console.log("Fetched  event data:", data);
+    console.log("Fetched event data:", data);
 
     return { data, error: null };
   } catch (error) {

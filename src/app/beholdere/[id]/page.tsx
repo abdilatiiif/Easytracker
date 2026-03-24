@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import getAll from "@/Actions/getAll";
+
 import {
   Card,
   CardContent,
@@ -111,6 +112,7 @@ export default function BeholderDetailPage() {
     "bg-green-100 text-green-800 border-green-200";
 
   function getEvents() {
+    router.push(`/beholdere/${params.id}/event`);
     console.log("Hent event logs for beholder:", params.id);
   }
 

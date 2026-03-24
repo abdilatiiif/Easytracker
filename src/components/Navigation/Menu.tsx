@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Settings,
   CalendarClock,
+  Metronome,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -49,6 +50,7 @@ function Menu() {
       label: "Siste hendelser",
       href: "/sistehendelser",
     },
+    { icon: Metronome, label: "Adgangskontroll", href: "/adgangskontroll" },
     { icon: BarChart3, label: "Analyse", href: "/analyse" },
     { icon: Users, label: "Team", href: "/team" },
   ];
