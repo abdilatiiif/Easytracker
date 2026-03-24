@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import getAll from "@/Actions/getAll";
-import { BrikkeContainer } from "@/components/adminCompoents/BrikkeContainer";
-import { BrikkeHeader } from "@/components/adminCompoents/BrikkeHeader";
+import { BrikkeContainer } from "@/components/beholderCompoents/BrikkeContainer";
+import { BrikkeHeader } from "@/components/beholderCompoents/BrikkeHeader";
 import { Card } from "@/components/ui/card";
-import Filter, { FilterValues } from "@/components/adminCompoents/Filter";
+import Filter, { FilterValues } from "@/components/beholderCompoents/Filter";
 
 interface BeholderData {
   id: string;

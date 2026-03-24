@@ -110,6 +110,10 @@ export default function BeholderDetailPage() {
     fraksjonFarger[data.fraksjonNavn] ??
     "bg-green-100 text-green-800 border-green-200";
 
+  function getEvents() {
+    console.log("Hent event logs for beholder:", params.id);
+  }
+
   return (
     <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 space-y-6">
       {/* Top bar */}
@@ -284,13 +288,13 @@ export default function BeholderDetailPage() {
               <CardTitle>Handlinger</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start gap-2">
+              <Button
+                onClick={() => getEvents()}
+                variant="outline"
+                className="w-full justify-start gap-2 cursor-pointer"
+              >
                 <ScrollText className="h-4 w-4" />
                 Event Logs
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <CalendarClock className="h-4 w-4" />
-                Events
               </Button>
             </CardContent>
           </Card>

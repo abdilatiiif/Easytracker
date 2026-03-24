@@ -6,10 +6,10 @@ export async function revalidateAdminView() {
   revalidatePath("/adminview");
 }
 
-export default async function getAll() {
+export default async function getAllEvents() {
   try {
     const res = await fetch(
-      "https://renovasjon.api.nkdev.no/beholdernedgravd/",
+      "https://renovasjon.api.nkdev.no/BeholderNedgravd/eventlog?count=100",
       {
         method: "GET",
         headers: {
@@ -28,6 +28,7 @@ export default async function getAll() {
     }
 
     const data = await res.json();
+    console.log("Fetched  event data:", data);
 
     return { data, error: null };
   } catch (error) {
