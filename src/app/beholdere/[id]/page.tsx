@@ -27,6 +27,7 @@ import {
   Tag,
   Fingerprint,
   Server,
+  BatteryFull,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -37,7 +38,7 @@ interface BeholderData {
   anleggNavn: string;
   fraksjonNavn: string;
   fraksjonType: number;
-  externalDevices: { deviceId: string; deviceName: string }[];
+  externalDevices: { deviceId: string; deviceName: string; batteryLevel?: number }[];
 }
 
 export default function BeholderDetailPage() {
@@ -263,23 +264,42 @@ export default function BeholderDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Server className="h-5 w-5" /> Enheter
+                  <BatteryFull className="h-5 w-5" /> Batterinivå
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {data.externalDevices.map((device, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 text-sm rounded-md bg-muted p-2"
-                  >
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {device.deviceId ?? `Enhet ${i + 1}`}
-                    </Badge>
-                    <span className="text-muted-foreground">
-                      {device.deviceName ?? "Ukjent enhet"}
-                    </span>
-                  </div>
-                ))}
+              <CardContent className="space-y-4">
+                {data.externalDevices.map((device, i) => {
+                  const level = device.batteryLevel ?? null;
+                  const barColor =
+                    level === null
+                      ? "bg-muted-foreground/30"
+                      : level > 50
+                        ? "bg-green-500"
+                        : level > 20
+                          ? "bg-yellow-500"
+                          : "bg-red-500";
+                  return (
+                    <div key={i} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">
+                          {device.deviceName ?? `Enhet ${i + 1}`}
+                        </span>
+                        <span className="text-muted-foreground font-mono text-xs">
+                          {level !== null ? `${level}%` : "Ingen data"}
+                        </span>
+                      </div>
+                      <div className="h-2.5 w-full rounded-full bg-muted">
+                        <div
+                          className={`h-full rounded-full transition-all ${barColor}`}
+                          style={{ width: level !== null ? `${level}%` : "0%" }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {device.deviceId}
+                      </p>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}

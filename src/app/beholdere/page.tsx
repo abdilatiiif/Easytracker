@@ -16,7 +16,7 @@ interface BeholderData {
   typeName: string;
   stasjonNavn: string;
   fraksjonNavn: string;
-  fraksjonType: number;
+  fraksjonType: string;
   anleggNavn: string;
 }
 
