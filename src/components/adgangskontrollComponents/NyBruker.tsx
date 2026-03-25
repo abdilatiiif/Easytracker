@@ -31,12 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const beholdere = [
-  { id: "1", navn: "Beholder A" },
-  { id: "2", navn: "Beholder B" },
-  { id: "3", navn: "Beholder C" },
-];
-
 const anlegg = [
   { id: "1", navn: "Anlegg Nord" },
   { id: "2", navn: "Anlegg Sør" },
@@ -66,7 +60,11 @@ const formSchema = z.object({
   avfallstyper: z.array(z.string()).min(1, "Velg minst én avfallstype."),
 });
 
-export function NyBruker() {
+interface NyBrukerProps {
+  externalDevices: { externalDeviceId: string; externalDeviceName: string }[];
+}
+
+export function NyBruker({ externalDevices }: NyBrukerProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -283,9 +281,9 @@ export function NyBruker() {
                       <SelectValue placeholder="Velg beholder" />
                     </SelectTrigger>
                     <SelectContent>
-                      {beholdere.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.navn}
+                      {externalDevices.map((d) => (
+                        <SelectItem key={d.externalDeviceId} value={d.externalDeviceId}>
+                          {d.externalDeviceId}
                         </SelectItem>
                       ))}
                     </SelectContent>
