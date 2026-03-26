@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import getAll from "@/Actions/getAll";
 import getBeholderById from "@/Actions/getBeholderById";
+import getAllEvents from "@/Actions/getAllEvents";
 
 import {
   Card,
@@ -56,9 +57,9 @@ export default function BeholderDetailPage() {
   const [batteryLevels, setBatteryLevels] = useState<Record<string, number>>(
     {},
   );
-  const [lastCommunication, setLastCommunication] = useState<
-    Record<string, string>
-  >({});
+  const [lastCommunication, setLastCommunication] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     async function fetchData() {
@@ -97,25 +98,39 @@ export default function BeholderDetailPage() {
         const beholderDetails = res.data;
         if (beholderDetails && beholderDetails.externalDevices) {
           const levels: Record<string, number> = {};
-          const communications: Record<string, string> = {};
+          const comms: Record<string, string> = {};
           for (const device of beholderDetails.externalDevices) {
             if (device.batteryLevel !== undefined) {
               levels[device.externalDeviceId] = device.batteryLevel;
             }
             if (device.latestCommunication) {
-              communications[device.externalDeviceId] =
-                device.latestCommunication;
+              comms[device.externalDeviceId] = device.latestCommunication;
             }
           }
           setBatteryLevels(levels);
-          setLastCommunication(communications);
         }
       } catch (error) {
         console.error("Error fetching device details:", error);
       }
     }
 
+    async function fetchLastCommunication() {
+      try {
+        const res = await getAllEvents();
+        if (res.error || !res.data) return;
+        const event = res.data.find(
+          (e: { beholderId: string }) => e.beholderId === params.id,
+        );
+        if (event?.timestamp) {
+          setLastCommunication(event.timestamp);
+        }
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    }
+
     fetchDeviceDetails();
+    fetchLastCommunication();
   }, [params.id]);
 
   if (loading) {
@@ -288,14 +303,8 @@ export default function BeholderDetailPage() {
                 </p>
                 <p className="text-sm font-medium flex items-center gap-2">
                   <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                  {Object.values(lastCommunication).find(
-                    (v) => v && v !== "0001-01-01T00:00:00",
-                  )
-                    ? new Date(
-                        Object.values(lastCommunication).find(
-                          (v) => v && v !== "0001-01-01T00:00:00",
-                        )!,
-                      ).toLocaleString("nb-NO")
+                  {lastCommunication
+                    ? new Date(lastCommunication).toLocaleString("nb-NO")
                     : "Ingen data tilgjengelig"}
                 </p>
               </div>
