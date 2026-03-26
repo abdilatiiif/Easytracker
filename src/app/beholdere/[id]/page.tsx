@@ -30,6 +30,7 @@ import {
   Fingerprint,
   Server,
   BatteryFull,
+  LockOpen,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -379,6 +380,13 @@ export default function BeholderDetailPage() {
               >
                 <ScrollText className="h-4 w-4" />
                 Event Logs
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2 bg-green-300 cursor-pointer"
+              >
+                <LockOpen className="h-4 w-4" />
+                Åpne beholder
               </Button>
             </CardContent>
           </Card>
