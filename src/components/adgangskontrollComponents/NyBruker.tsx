@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,11 @@ import {
 } from "@/components/ui/select";
 
 const avfallstyper = [
-  { id: "restavfall", label: "Restavfall" },
-  { id: "papir", label: "Papir" },
-  { id: "plast", label: "Plast" },
-  { id: "glass_metall", label: "Glass og metall" },
-  { id: "matavfall", label: "Matavfall" },
-  { id: "farlig_avfall", label: "Farlig avfall" },
+  { id: "Restavfall", label: "Restavfall" },
+  { id: "Papir", label: "Papir" },
+  { id: "Plast", label: "Plast" },
+  { id: "Glass", label: "Glass" },
+  { id: "Matavfall", label: "Matavfall" },
 ];
 
 const formSchema = z.object({
@@ -49,18 +48,17 @@ const formSchema = z.object({
   husNr: z.string().min(1, "Husnummer er påkrevd."),
   postKode: z.string().regex(/^\d{4}$/, "Postkode må være 4 siffer."),
   sted: z.string().min(2, "Sted må være minst 2 tegn."),
-  beholder: z.string().min(1, "Velg en beholder."),
-  anlegg: z.string().min(1, "Velg et anlegg."),
+  stasjon: z.string().min(1, "Velg en stasjon."),
   avfallstyper: z.array(z.string()).min(1, "Velg minst én avfallstype."),
 });
 
 interface NyBrukerProps {
-  externalDevices: { externalDeviceId: string; externalDeviceName: string }[];
-  anleggsNavn: string[];
+  stasjoner: string[];
+  stasjonAvfallstyper: Record<string, string[]>;
 }
 
-export function NyBruker({ externalDevices, anleggsNavn }: NyBrukerProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
+export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
+  const form = useForm<NyBrukerForm>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fornavn: "",
@@ -71,11 +69,28 @@ export function NyBruker({ externalDevices, anleggsNavn }: NyBrukerProps) {
       husNr: "",
       postKode: "",
       sted: "",
-      beholder: "",
-      anlegg: "",
-      avfallstyper: [],
+      stasjon: "",
+      avfallstyper: avfallstyper.map((t) => t.id),
     },
   });
+
+  const valgtStasjon = useWatch({ control: form.control, name: "stasjon" });
+
+  const tilgjengeligeAvfallstyper = valgtStasjon
+    ? avfallstyper.filter((t) =>
+        (stasjonAvfallstyper[valgtStasjon] ?? []).includes(t.id),
+      )
+    : avfallstyper;
+
+  // Reset avfallstyper when station changes (auto-check all available)
+  const prevStasjon = React.useRef(valgtStasjon);
+  React.useEffect(() => {
+    if (valgtStasjon !== prevStasjon.current) {
+      prevStasjon.current = valgtStasjon;
+      const ids = tilgjengeligeAvfallstyper.map((t) => t.id);
+      form.setValue("avfallstyper", ids);
+    }
+  }, [valgtStasjon, tilgjengeligeAvfallstyper, form]);
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     console.log("Ny bruker:", data);
@@ -264,48 +279,19 @@ export function NyBruker({ externalDevices, anleggsNavn }: NyBrukerProps) {
               />
             </div>
 
-            {/* Beholder */}
+            {/* Stasjon */}
             <Controller
-              name="beholder"
+              name="stasjon"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Beholder</FieldLabel>
+                  <FieldLabel>Stasjon</FieldLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Velg beholder" />
+                      <SelectValue placeholder="Velg stasjon" />
                     </SelectTrigger>
                     <SelectContent>
-                      {externalDevices.map((d) => (
-                        <SelectItem
-                          key={d.externalDeviceId}
-                          value={d.externalDeviceId}
-                        >
-                          {d.externalDeviceId}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            {/* Anlegg */}
-            <Controller
-              name="anlegg"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Anlegg</FieldLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Velg anlegg" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {anleggsNavn.map((navn) => (
+                      {stasjoner.map((navn) => (
                         <SelectItem key={navn} value={navn}>
                           {navn}
                         </SelectItem>
@@ -327,7 +313,7 @@ export function NyBruker({ externalDevices, anleggsNavn }: NyBrukerProps) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Avfallstyper</FieldLabel>
                   <div className="grid grid-cols-2 gap-3 pt-1">
-                    {avfallstyper.map((type) => (
+                    {tilgjengeligeAvfallstyper.map((type) => (
                       <div key={type.id} className="flex items-center gap-2">
                         <Checkbox
                           id={`avfall-${type.id}`}
@@ -373,3 +359,5 @@ export function NyBruker({ externalDevices, anleggsNavn }: NyBrukerProps) {
     </Card>
   );
 }
+
+type NyBrukerForm = z.infer<typeof formSchema>;
