@@ -24,7 +24,7 @@ const fraksjonFarger: Record<string, string> = {
   Matavfall: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
-export function BrikkeContainer({ data }: { data: BeholderData }) {
+export function EventContainer({ data }: { data: BeholderData }) {
   const router = useRouter();
 
   const badgeFarge =

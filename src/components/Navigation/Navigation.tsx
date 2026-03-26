@@ -7,7 +7,10 @@ import Link from "next/link";
 function Navigation() {
   return (
     <div className="h-screen fixed max-w-60 p-5 bg-gray-100">
-      <Link href="/dashbord" className="flex items-center gap-2">
+      <Link
+        href="/dashbord"
+        className="flex items-center gap-2 cursor-pointer mb-6"
+      >
         <Image
           src="/norkart.webp"
           alt="Navigation Image"

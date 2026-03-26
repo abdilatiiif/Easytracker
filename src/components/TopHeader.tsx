@@ -6,6 +6,7 @@ import { Search, Mail, Bell } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import Link from "next/link";
 
 export function TopHeader() {
   const router = useRouter();
@@ -48,12 +49,17 @@ export function TopHeader() {
 
   return (
     <header className="flex fixed items-center justify-center border-b border-border bg-card px-6 py-3 w-full z-50">
-      <Image
-        src="/norkart.webp"
-        alt="Navigation Image"
-        width={150}
-        height={150}
-      />
+      <Link href="/">
+        {" "}
+        <Image
+          src="/norkart.webp"
+          alt="Navigation Image"
+          width={150}
+          height={150}
+          className="cursor-pointer"
+        />
+      </Link>
+
       <div className="flex items-center justify-center w-full max-w-7xl">
         {/* Search */}
         <div className="relative w-full max-w-sm">

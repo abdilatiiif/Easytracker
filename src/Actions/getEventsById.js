@@ -1,15 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
-export async function revalidateAdminView() {
-  revalidatePath("/adminview");
-}
-
-export default async function getAll() {
+export default async function getEventsById(id) {
   try {
     const res = await fetch(
-      "https://renovasjon.api.nkdev.no/beholdernedgravd/",
+      `https://renovasjon.api.nkdev.no/BeholderNedgravd/${id}`,
       {
         method: "GET",
         headers: {
@@ -28,10 +22,13 @@ export default async function getAll() {
     }
 
     const data = await res.json();
+    console.log(`Fetched data  events for beholder ID ${id}:`, data);
 
     return { data, error: null };
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error(`Error fetching events data for beholder ID ${id}:`, error);
     return { data: null, error: error.message };
   }
 }
+
+

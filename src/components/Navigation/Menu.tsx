@@ -5,12 +5,13 @@ import getAll from "@/Actions/getAll";
 import {
   LayoutGrid,
   Microchip,
-  House,
   BarChart3,
   Users,
   LogOut,
   HelpCircle,
   Settings,
+  CalendarClock,
+  Metronome,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -45,10 +46,11 @@ function Menu() {
       href: "/beholdere",
     },
     {
-      icon: House,
-      label: "Adressestatus",
-      href: "/adressestatus",
+      icon: CalendarClock,
+      label: "Siste hendelser",
+      href: "/sistehendelser",
     },
+    { icon: Metronome, label: "Adgangskontroll", href: "/adgangskontroll" },
     { icon: BarChart3, label: "Analyse", href: "/analyse" },
     { icon: Users, label: "Team", href: "/team" },
   ];
