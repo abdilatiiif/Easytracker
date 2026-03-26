@@ -14,6 +14,8 @@ function Page() {
     [],
   );
 
+  const [anleggsNavn, setAnleggsNavn] = useState<string[]>([]);
+
   useEffect(() => {
     async function fetchDevices() {
       const res = await getAll();
@@ -23,6 +25,11 @@ function Page() {
         (beholder: { externalDevices?: ExternalDevice[] }) =>
           beholder.externalDevices ?? [],
       );
+
+      const anleggNames: string[] = res.data
+        .map((beholder: { anleggNavn?: string }) => beholder.anleggNavn)
+        .filter((navn: string | undefined): navn is string => !!navn);
+      setAnleggsNavn([...new Set(anleggNames)]);
 
       // Remove duplicates by deviceId and sort numerically
       const unique = Array.from(
@@ -39,7 +46,7 @@ function Page() {
   return (
     <div className="container mx-auto pl-65 pt-25 pr-6">
       <h1 className="text-2xl font-bold mb-4">Adgangskontroll</h1>
-      <NyBruker externalDevices={externalDeviceIds} />
+      <NyBruker externalDevices={externalDeviceIds} anleggsNavn={anleggsNavn} />
     </div>
   );
 }

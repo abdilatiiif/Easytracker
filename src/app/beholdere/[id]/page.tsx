@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import getAll from "@/Actions/getAll";
+import getBeholderById from "@/Actions/getBeholderById";
 
 import {
   Card,
@@ -38,7 +39,12 @@ interface BeholderData {
   anleggNavn: string;
   fraksjonNavn: string;
   fraksjonType: number;
-  externalDevices: { deviceId: string; deviceName: string; batteryLevel?: number }[];
+  externalDevices: {
+    externalDeviceId: string;
+    externalDeviceName: string;
+    batteryLevel?: number;
+    latestCommunication?: string;
+  }[];
 }
 
 export default function BeholderDetailPage() {
@@ -47,6 +53,12 @@ export default function BeholderDetailPage() {
   const [data, setData] = useState<BeholderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [batteryLevels, setBatteryLevels] = useState<Record<string, number>>(
+    {},
+  );
+  const [lastCommunication, setLastCommunication] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     async function fetchData() {
@@ -71,6 +83,39 @@ export default function BeholderDetailPage() {
       }
     }
     fetchData();
+  }, [params.id]);
+
+  useEffect(() => {
+    async function fetchDeviceDetails() {
+      try {
+        const res = await getBeholderById(params.id);
+        if (res.error) {
+          console.error("Error fetching beholder details:", res.error);
+          return;
+        }
+
+        const beholderDetails = res.data;
+        if (beholderDetails && beholderDetails.externalDevices) {
+          const levels: Record<string, number> = {};
+          const communications: Record<string, string> = {};
+          for (const device of beholderDetails.externalDevices) {
+            if (device.batteryLevel !== undefined) {
+              levels[device.externalDeviceId] = device.batteryLevel;
+            }
+            if (device.latestCommunication) {
+              communications[device.externalDeviceId] =
+                device.latestCommunication;
+            }
+          }
+          setBatteryLevels(levels);
+          setLastCommunication(communications);
+        }
+      } catch (error) {
+        console.error("Error fetching device details:", error);
+      }
+    }
+
+    fetchDeviceDetails();
   }, [params.id]);
 
   if (loading) {
@@ -239,11 +284,19 @@ export default function BeholderDetailPage() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-xs uppercase text-muted-foreground tracking-wider mb-1">
-                  Siste oppdatering
+                  Siste kommunikasjon
                 </p>
                 <p className="text-sm font-medium flex items-center gap-2">
                   <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                  Ingen data tilgjengelig
+                  {Object.values(lastCommunication).find(
+                    (v) => v && v !== "0001-01-01T00:00:00",
+                  )
+                    ? new Date(
+                        Object.values(lastCommunication).find(
+                          (v) => v && v !== "0001-01-01T00:00:00",
+                        )!,
+                      ).toLocaleString("nb-NO")
+                    : "Ingen data tilgjengelig"}
                 </p>
               </div>
               <Separator />
@@ -269,7 +322,7 @@ export default function BeholderDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {data.externalDevices.map((device, i) => {
-                  const level = device.batteryLevel ?? null;
+                  const level = batteryLevels[device.externalDeviceId] ?? null;
                   const barColor =
                     level === null
                       ? "bg-muted-foreground/30"
@@ -282,7 +335,7 @@ export default function BeholderDetailPage() {
                     <div key={i} className="space-y-1.5">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">
-                          {device.deviceName ?? `Enhet ${i + 1}`}
+                          {device.externalDeviceName ?? `Enhet ${i + 1}`}
                         </span>
                         <span className="text-muted-foreground font-mono text-xs">
                           {level !== null ? `${level}%` : "Ingen data"}
@@ -295,7 +348,7 @@ export default function BeholderDetailPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground font-mono">
-                        {device.deviceId}
+                        {device.externalDeviceId}
                       </p>
                     </div>
                   );

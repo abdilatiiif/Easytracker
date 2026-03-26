@@ -1,9 +1,9 @@
 "use server";
 
-export default async function getAllEvents() {
+export default async function getBeholderById(id) {
   try {
     const res = await fetch(
-      "https://renovasjon.api.nkdev.no/BeholderNedgravd/eventlog?count=100",
+      `https://renovasjon.api.nkdev.no/beholdernedgravd/${id}`,
       {
         method: "GET",
         headers: {
@@ -22,11 +22,11 @@ export default async function getAllEvents() {
     }
 
     const data = await res.json();
-    console.log("Fetched event data:", data);
+    console.log(`Fetched data for beholder ID ${id}:`, data);
 
     return { data, error: null };
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error(`Error fetching data for beholder ID ${id}:`, error);
     return { data: null, error: error.message };
   }
 }

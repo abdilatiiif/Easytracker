@@ -31,12 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const anlegg = [
-  { id: "1", navn: "Anlegg Nord" },
-  { id: "2", navn: "Anlegg Sør" },
-  { id: "3", navn: "Anlegg Øst" },
-];
-
 const avfallstyper = [
   { id: "restavfall", label: "Restavfall" },
   { id: "papir", label: "Papir" },
@@ -62,9 +56,10 @@ const formSchema = z.object({
 
 interface NyBrukerProps {
   externalDevices: { externalDeviceId: string; externalDeviceName: string }[];
+  anleggsNavn: string[];
 }
 
-export function NyBruker({ externalDevices }: NyBrukerProps) {
+export function NyBruker({ externalDevices, anleggsNavn }: NyBrukerProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -282,7 +277,10 @@ export function NyBruker({ externalDevices }: NyBrukerProps) {
                     </SelectTrigger>
                     <SelectContent>
                       {externalDevices.map((d) => (
-                        <SelectItem key={d.externalDeviceId} value={d.externalDeviceId}>
+                        <SelectItem
+                          key={d.externalDeviceId}
+                          value={d.externalDeviceId}
+                        >
                           {d.externalDeviceId}
                         </SelectItem>
                       ))}
@@ -307,9 +305,9 @@ export function NyBruker({ externalDevices }: NyBrukerProps) {
                       <SelectValue placeholder="Velg anlegg" />
                     </SelectTrigger>
                     <SelectContent>
-                      {anlegg.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.navn}
+                      {anleggsNavn.map((navn) => (
+                        <SelectItem key={navn} value={navn}>
+                          {navn}
                         </SelectItem>
                       ))}
                     </SelectContent>
