@@ -87,7 +87,7 @@ export default function Home() {
     async function fetchData() {
       const [bRes, sRes] = await Promise.all([getAll(), getDashboardStats()]);
       if (bRes.data) setBeholdere(bRes.data);
-      if (sRes.data) setStats(sRes.data);
+      if (sRes.data) setStats(sRes.data as DashboardStats);
       setLoading(false);
     }
     fetchData();
@@ -179,12 +179,28 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="container mx-auto pl-60 pt-20 pr-6 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse h-28" />
-          ))}
-        </div>
+      <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <svg
+          className="animate-spin h-10 w-10 text-primary"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+        <p className="text-muted-foreground text-sm">Laster dashboard...</p>
       </div>
     );
   }
@@ -199,7 +215,7 @@ export default function Home() {
             setTimeFilter(v === "all" ? null : (v as TimeFilter))
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-40">
             <SelectValue placeholder="Velg periode" />
           </SelectTrigger>
           <SelectContent>

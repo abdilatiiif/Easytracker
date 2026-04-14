@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EventData {
@@ -183,10 +183,10 @@ function Page() {
             placeholder="Søk beholder ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-[220px]"
+            className="w-55"
           />
           <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-45">
               <SelectValue placeholder="Hendelsestype" />
             </SelectTrigger>
             <SelectContent>
@@ -207,7 +207,7 @@ function Page() {
                 setDateFrom(e.target.value);
                 setVisibleCount(20);
               }}
-              className="w-[160px]"
+              className="w-40"
             />
           </div>
           <div className="flex items-center gap-1">
@@ -219,7 +219,7 @@ function Page() {
                 setDateTo(e.target.value);
                 setVisibleCount(20);
               }}
-              className="w-[160px]"
+              className="w-40"
             />
           </div>
         </div>
@@ -236,10 +236,11 @@ function Page() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                Laster hendelser...
+              </p>
             </div>
           ) : error ? (
             <p className="text-red-600">{error}</p>

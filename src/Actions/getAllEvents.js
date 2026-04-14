@@ -13,7 +13,7 @@ export default async function getAllEvents() {
           "Content-Type": "application/json",
         },
 
-        next: { revalidate: 300 },
+        next: { revalidate: 600 },
       },
     );
 
