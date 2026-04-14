@@ -14,6 +14,7 @@ interface BeholderData {
   locationId: string;
   locationName: string;
   typeName: string;
+  fraksjonId: string;
   stasjonNavn: string;
   fraksjonNavn: string;
   fraksjonType: string;
@@ -93,7 +94,7 @@ export default function Page() {
 
     const fraksjonMatch =
       filters.fraksjoner.length === 0 ||
-      filters.fraksjoner.includes(item.fraksjonNavn);
+      filters.fraksjoner.includes(item.fraksjonId);
 
     return externalSystemMatch && stationMatch && anleggMatch && fraksjonMatch;
   });

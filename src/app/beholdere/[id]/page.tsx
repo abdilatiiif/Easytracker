@@ -41,6 +41,7 @@ interface BeholderData {
   anleggNavn: string;
   fraksjonNavn: string;
   fraksjonType: number;
+  fraksjonId: string;
   externalDevices: {
     externalDeviceId: string;
     externalDeviceName: string;
@@ -255,7 +256,7 @@ export default function BeholderDetailPage() {
                 <Image
                   width={48}
                   height={48}
-                  src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonType}.png`}
+                  src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonId}.png`}
                   alt={data.fraksjonNavn}
                   className="rounded-xl"
                 />

@@ -12,6 +12,7 @@ interface BeholderData {
   stasjonNavn: string;
   fraksjonNavn: string;
   fraksjonType: string;
+  fraksjonId: string;
   anleggNavn: string;
 }
 
@@ -72,7 +73,7 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
         <Image
           width={28}
           height={28}
-          src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonType}.png`}
+          src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonId}.png`}
           alt={data.fraksjonNavn}
           className="rounded-md"
         />
