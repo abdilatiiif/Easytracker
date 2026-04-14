@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import getAllEvents from "@/Actions/getAllEvents";
 import {
   Table,
@@ -13,6 +13,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EventData {
   beholderId: string;
@@ -23,6 +33,14 @@ interface EventData {
   identityType: string | null;
   identityId: string | null;
 }
+
+type SortKey =
+  | "timestamp"
+  | "eventType"
+  | "beholderId"
+  | "batteryLevel"
+  | "fillLevel";
+type SortDir = "asc" | "desc";
 
 function eventBadgeColor(type: string) {
   if (type.includes("Opened")) return "bg-green-100 text-green-800";
@@ -42,10 +60,43 @@ function formatDate(timestamp: string) {
   });
 }
 
+function SortIcon({
+  column,
+  sortKey,
+  sortDir,
+}: {
+  column: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+}) {
+  if (column !== sortKey)
+    return (
+      <ArrowUpDown className="inline ml-1 h-3 w-3 text-muted-foreground" />
+    );
+  return sortDir === "asc" ? (
+    <ArrowUp className="inline ml-1 h-3 w-3" />
+  ) : (
+    <ArrowDown className="inline ml-1 h-3 w-3" />
+  );
+}
+
 function Page() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
+  const [search, setSearch] = useState("");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("timestamp");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [visibleCount, setVisibleCount] = useState(20);
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split("T")[0];
+  });
+  const [dateTo, setDateTo] = useState(
+    () => new Date().toISOString().split("T")[0],
+  );
 
   useEffect(() => {
     async function fetchEvents() {
@@ -65,13 +116,123 @@ function Page() {
     fetchEvents();
   }, []);
 
+  const eventTypes = useMemo(
+    () => [...new Set(events.map((e) => e.eventType))].sort(),
+    [events],
+  );
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  };
+
+  const filteredEvents = useMemo(() => {
+    let filtered = events;
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      filtered = filtered.filter((e) => e.beholderId.toLowerCase().includes(q));
+    }
+
+    if (eventTypeFilter !== "all") {
+      filtered = filtered.filter((e) => e.eventType === eventTypeFilter);
+    }
+
+    if (dateFrom) {
+      const from = new Date(dateFrom).getTime();
+      filtered = filtered.filter(
+        (e) => new Date(e.timestamp).getTime() >= from,
+      );
+    }
+
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(
+        (e) => new Date(e.timestamp).getTime() <= to.getTime(),
+      );
+    }
+
+    filtered = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "timestamp") {
+        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      } else if (sortKey === "eventType" || sortKey === "beholderId") {
+        cmp = a[sortKey].localeCompare(b[sortKey]);
+      } else if (sortKey === "batteryLevel" || sortKey === "fillLevel") {
+        cmp = (a[sortKey] ?? -1) - (b[sortKey] ?? -1);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return filtered;
+  }, [events, search, eventTypeFilter, sortKey, sortDir, dateFrom, dateTo]);
+
+  const visibleEvents = filteredEvents.slice(0, visibleCount);
+
   return (
     <div className="container mx-auto pl-60 pt-20 pr-6 pb-12">
-      <h1 className="text-2xl font-bold mb-6">Siste hendelser</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Siste hendelser</h1>
+        <div className="flex gap-3 items-center flex-wrap">
+          <Input
+            placeholder="Søk beholder ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-[220px]"
+          />
+          <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Hendelsestype" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle typer</SelectItem>
+              {eventTypes.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-muted-foreground">Fra:</span>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setVisibleCount(20);
+              }}
+              className="w-[160px]"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-muted-foreground">Til:</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setVisibleCount(20);
+              }}
+              className="w-[160px]"
+            />
+          </div>
+        </div>
+      </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Hendelser ({events.length})</CardTitle>
+          <CardTitle>Hendelser ({filteredEvents.length})</CardTitle>
+          {visibleCount < filteredEvents.length && (
+            <p className="text-sm text-muted-foreground">
+              Viser {visibleCount} av {filteredEvents.length}
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -86,16 +247,66 @@ function Page() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tidspunkt</TableHead>
-                  <TableHead>Hendelse</TableHead>
-                  <TableHead>Beholder ID</TableHead>
-                  <TableHead>Batteri</TableHead>
-                  <TableHead>Fyllnivå</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("timestamp")}
+                  >
+                    Tidspunkt{" "}
+                    <SortIcon
+                      column="timestamp"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("eventType")}
+                  >
+                    Hendelse{" "}
+                    <SortIcon
+                      column="eventType"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("beholderId")}
+                  >
+                    Beholder ID{" "}
+                    <SortIcon
+                      column="beholderId"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("batteryLevel")}
+                  >
+                    Batteri{" "}
+                    <SortIcon
+                      column="batteryLevel"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => handleSort("fillLevel")}
+                  >
+                    Fyllnivå{" "}
+                    <SortIcon
+                      column="fillLevel"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                    />
+                  </TableHead>
                   <TableHead>Bruker</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {events.map((event, i) => (
+                {visibleEvents.map((event, i) => (
                   <TableRow key={i}>
                     <TableCell className="whitespace-nowrap">
                       {formatDate(event.timestamp)}
@@ -124,6 +335,16 @@ function Page() {
                 ))}
               </TableBody>
             </Table>
+          )}
+          {visibleCount < filteredEvents.length && (
+            <div className="flex justify-center mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount((prev) => prev + 20)}
+              >
+                Vis mer
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
