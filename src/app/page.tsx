@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { Fragment, useEffect, useState, useMemo } from "react";
 import getAll from "@/Actions/getAll";
 import getDashboardStats from "@/Actions/getDashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,17 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Package, Building, Recycle, TrendingUp, Loader2 } from "lucide-react";
 
 interface BeholderData {
   id: string;
-  externalSystem: string;
-  locationId: string;
-  locationName: string;
-  typeName: string;
-  fraksjonId: string;
-  stasjonNavn: string;
   fraksjonNavn: string;
-  fraksjonType: string;
   anleggNavn: string;
 }
 
@@ -82,6 +76,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("14d");
   const [showAllAnlegg, setShowAllAnlegg] = useState(false);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -180,87 +180,115 @@ export default function Home() {
   if (loading) {
     return (
       <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <svg
-          className="animate-spin h-10 w-10 text-primary"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-        <p className="text-muted-foreground text-sm">Laster dashboard...</p>
+        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+        <p className="text-muted-foreground text-sm">Laster dashbord...</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Select
-          value={timeFilter ?? "all"}
-          onValueChange={(v) =>
-            setTimeFilter(v === "all" ? null : (v as TimeFilter))
-          }
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Velg periode" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle</SelectItem>
-            {TIME_FILTERS.map((f) => (
-              <SelectItem key={f.key} value={f.key!}>
-                {f.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* ── Velkomst ── */}
+      <div className="rounded-xl bg-linear-to-r from-green-400 via-emerald-400 to-teal-400 p-8 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              {now.getHours() < 12
+                ? "God morgen"
+                : now.getHours() < 18
+                  ? "God ettermiddag"
+                  : "God kveld"}{" "}
+              👋
+            </h1>
+            <p className="mt-2 text-white/80 text-base md:text-lg">
+              {now.toLocaleDateString("nb-NO", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+              {" · "}
+              {now.toLocaleTimeString("nb-NO", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </p>
+          </div>
+          <Select
+            value={timeFilter ?? "all"}
+            onValueChange={(v) =>
+              setTimeFilter(v === "all" ? null : (v as TimeFilter))
+            }
+          >
+            <SelectTrigger className="w-40 bg-white/20 border-white/30 text-white">
+              <SelectValue placeholder="Velg periode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              {TIME_FILTERS.map((f) => (
+                <SelectItem key={f.key} value={f.key!}>
+                  {f.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* ── KPI-kort ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-24 w-24 -mr-4 -mt-4 rounded-full bg-indigo-100 opacity-50" />
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Antall tømminger
             </CardTitle>
+            <Recycle className="h-5 w-5 text-indigo-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{totalTømminger}</p>
+            <p className="text-4xl font-extrabold text-indigo-600">
+              {totalTømminger}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" /> I valgt periode
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-24 w-24 -mr-4 -mt-4 rounded-full bg-emerald-100 opacity-50" />
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Totalt beholdere
             </CardTitle>
+            <Package className="h-5 w-5 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{beholdere.length}</p>
+            <p className="text-4xl font-extrabold text-emerald-600">
+              {beholdere.length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Registrert i systemet
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-24 w-24 -mr-4 -mt-4 rounded-full bg-amber-100 opacity-50" />
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Aktive anlegg
             </CardTitle>
+            <Building className="h-5 w-5 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{uniqueAnlegg}</p>
+            <p className="text-4xl font-extrabold text-amber-600">
+              {uniqueAnlegg}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Med tilknyttede beholdere
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -281,16 +309,41 @@ export default function Home() {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
-                  label={({ name, percent }) =>
-                    `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                  }
+                  innerRadius={50}
+                  outerRadius={110}
+                  paddingAngle={2}
                 >
                   {tømmingerPerAnlegg.map((_, i) => (
                     <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  defaultIndex={0}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const d = payload[0].payload;
+                    const idx = tømmingerPerAnlegg.findIndex(
+                      (a) => a.name === d.name,
+                    );
+                    const total = tømmingerPerAnlegg.reduce(
+                      (s, a) => s + a.value,
+                      0,
+                    );
+                    const pct = total
+                      ? ((d.value / total) * 100).toFixed(1)
+                      : "0";
+                    return (
+                      <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
+                        <p className="font-semibold">
+                          #{idx + 1} {d.name}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {d.value} tømminger ({pct}%)
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -314,7 +367,24 @@ export default function Home() {
                   height={60}
                 />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
+                <Tooltip
+                  defaultIndex={0}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const val = payload[0].value;
+                    const idx = tømmingerPerAnlegg.findIndex(
+                      (a) => a.name === label,
+                    );
+                    return (
+                      <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
+                        <p className="font-semibold">
+                          #{idx + 1} {label}
+                        </p>
+                        <p className="text-muted-foreground">{val} tømminger</p>
+                      </div>
+                    );
+                  }}
+                />
                 <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -335,7 +405,24 @@ export default function Home() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
+                <Tooltip
+                  defaultIndex={0}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const val = payload[0].value;
+                    const idx = filteredEventsOverTime.findIndex(
+                      (e) => e.date === label,
+                    );
+                    return (
+                      <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
+                        <p className="font-semibold">{label}</p>
+                        <p className="text-muted-foreground">
+                          Dag {idx + 1}: {val} hendelser
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
                 <Area
                   type="monotone"
                   dataKey="antall"
@@ -362,10 +449,9 @@ export default function Home() {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
-                  label={({ name, percent }) =>
-                    `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
-                  }
+                  innerRadius={50}
+                  outerRadius={110}
+                  paddingAngle={2}
                 >
                   {kastPerFraksjon.map((_, i) => (
                     <Cell
@@ -374,7 +460,33 @@ export default function Home() {
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  defaultIndex={0}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const d = payload[0].payload;
+                    const idx = kastPerFraksjon.findIndex(
+                      (f) => f.name === d.name,
+                    );
+                    const total = kastPerFraksjon.reduce(
+                      (s, f) => s + f.value,
+                      0,
+                    );
+                    const pct = total
+                      ? ((d.value / total) * 100).toFixed(1)
+                      : "0";
+                    return (
+                      <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
+                        <p className="font-semibold">
+                          #{idx + 1} {d.name}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {d.value} kast ({pct}%)
+                        </p>
+                      </div>
+                    );
+                  }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -400,26 +512,15 @@ export default function Home() {
             </div>
             {(showAllAnlegg ? anleggOversikt : anleggOversikt.slice(0, 4)).map(
               (a) => (
-                <>
-                  <div
-                    key={`n-${a.name}`}
-                    className="text-sm font-medium truncate"
-                  >
-                    {a.name}
-                  </div>
-                  <div
-                    key={`b-${a.name}`}
-                    className="text-sm text-muted-foreground text-right"
-                  >
+                <Fragment key={a.name}>
+                  <div className="text-sm font-medium truncate">{a.name}</div>
+                  <div className="text-sm text-muted-foreground text-right">
                     {a.beholdere}
                   </div>
-                  <div
-                    key={`k-${a.name}`}
-                    className="text-sm text-muted-foreground text-right"
-                  >
+                  <div className="text-sm text-muted-foreground text-right">
                     {a.kast}
                   </div>
-                </>
+                </Fragment>
               ),
             )}
           </div>

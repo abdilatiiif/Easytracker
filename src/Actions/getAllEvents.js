@@ -3,7 +3,7 @@
 export default async function getAllEvents() {
   try {
     const res = await fetch(
-      "https://renovasjon.api.nkdev.no/BeholderNedgravd/eventlog?count=100000",
+      "https://renovasjon.api.nkdev.no/BeholderNedgravd/eventlog?count=100",
       {
         method: "GET",
         headers: {

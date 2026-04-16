@@ -26,13 +26,24 @@ import {
   CalendarClock,
   Trash2,
   Building,
-  Tag,
   Fingerprint,
   Server,
   BatteryFull,
   LockOpen,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const Map = dynamic(() => import("@/components/beholderCompoents/Map"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full w-full">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <p className="mt-2 text-sm text-muted-foreground">Laster kart...</p>
+    </div>
+  ),
+});
 
 interface BeholderData {
   id: string;
@@ -40,7 +51,6 @@ interface BeholderData {
   stasjonNavn: string;
   anleggNavn: string;
   fraksjonNavn: string;
-  fraksjonType: number;
   fraksjonId: string;
   externalDevices: {
     externalDeviceId: string;
@@ -63,6 +73,11 @@ export default function BeholderDetailPage() {
     null,
   );
 
+  const [koordinater, setKoordinater] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -79,6 +94,16 @@ export default function BeholderDetailPage() {
           return;
         }
         setData(beholder);
+        console.log("Beholder data:", beholder);
+        if (
+          beholder.koordinater?.lat != null &&
+          beholder.koordinater?.long != null
+        ) {
+          setKoordinater({
+            lat: beholder.koordinater.lat,
+            lng: beholder.koordinater.long,
+          });
+        }
       } catch {
         setError("Feil ved lasting av data");
       } finally {
@@ -179,6 +204,8 @@ export default function BeholderDetailPage() {
     console.log("Hent event logs for beholder:", params.id);
   }
 
+  // MAP from leaflet
+
   return (
     <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 space-y-6">
       {/* Top bar */}
@@ -244,11 +271,6 @@ export default function BeholderDetailPage() {
                   label="Fraksjon"
                   value={data.fraksjonNavn}
                 />
-                <InfoRow
-                  icon={<Tag className="h-4 w-4" />}
-                  label="Fraksjon type"
-                  value={String(data.fraksjonType)}
-                />
               </div>
 
               {/* Fraksjon icon */}
@@ -276,15 +298,17 @@ export default function BeholderDetailPage() {
               <CardDescription>Plassering av beholderen</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="w-full h-64 rounded-lg bg-muted flex items-center justify-center border border-dashed border-border">
-                <div className="text-center text-muted-foreground">
-                  <MapPin className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm font-medium">Kart kommer snart</p>
-                  <p className="text-xs">
-                    Integrer med Leaflet eller Google Maps
+              {koordinater ? (
+                <div className="w-full h-80 rounded-lg overflow-hidden border border-border">
+                  <Map lat={koordinater.lat} lng={koordinater.lng} />
+                </div>
+              ) : (
+                <div className="w-full h-64 rounded-lg bg-muted flex items-center justify-center border border-dashed border-border">
+                  <p className="text-sm text-muted-foreground">
+                    Ingen koordinater tilgjengelig for denne beholderen
                   </p>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
