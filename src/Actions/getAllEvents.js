@@ -13,7 +13,7 @@ export default async function getAllEvents() {
           "Content-Type": "application/json",
         },
 
-        next: { revalidate: 60 },
+        next: { revalidate: 600 },
       },
     );
 
@@ -22,9 +22,11 @@ export default async function getAllEvents() {
     }
 
     const data = await res.json();
-    console.log("Fetched event data:", data);
+    const filtered = data.filter(
+      (e) => e.eventType === "LockOpened" || e.eventType === "LockClosed",
+    );
 
-    return { data, error: null };
+    return { data: filtered, error: null };
   } catch (error) {
     console.error("Error fetching data:", error);
     return { data: null, error: error.message };

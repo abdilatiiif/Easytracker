@@ -13,7 +13,7 @@ export default async function getEventsById(id) {
           "Content-Type": "application/json",
         },
 
-        next: { revalidate: 60 },
+        next: { revalidate: 300 },
       },
     );
 
@@ -30,5 +30,3 @@ export default async function getEventsById(id) {
     return { data: null, error: error.message };
   }
 }
-
-
