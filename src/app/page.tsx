@@ -55,12 +55,12 @@ const COLORS = [
 type TimeFilter = "7d" | "14d" | "30d" | "2m" | "3m" | "6m" | null;
 
 const TIME_FILTERS: { key: TimeFilter; label: string; days: number }[] = [
-  { key: "7d", label: "7 dager", days: 7 },
-  { key: "14d", label: "14 dager", days: 14 },
-  { key: "30d", label: "30 dager", days: 30 },
-  { key: "2m", label: "2 mnd", days: 60 },
-  { key: "3m", label: "3 mnd", days: 90 },
-  { key: "6m", label: "6 mnd", days: 180 },
+  { key: "7d", label: "Siste 7 dager", days: 7 },
+  { key: "14d", label: "Siste 14 dager", days: 14 },
+  { key: "30d", label: "Siste 30 dager", days: 30 },
+  { key: "2m", label: "Siste 2 mnd", days: 60 },
+  { key: "3m", label: "Siste 3 mnd", days: 90 },
+  { key: "6m", label: "Siste 6 mnd", days: 180 },
 ];
 
 function getCutoffDate(filter: TimeFilter): string {
@@ -298,7 +298,12 @@ export default function Home() {
         {/* Pie: Tømminger per anlegg */}
         <Card>
           <CardHeader>
-            <CardTitle>Tømminger per anlegg</CardTitle>
+            <CardTitle>
+              Tømminger per anlegg{" "}
+              {timeFilter
+                ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
+                : ""}
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -353,7 +358,12 @@ export default function Home() {
         {/* Bar: Tømminger per anlegg */}
         <Card>
           <CardHeader>
-            <CardTitle>Tømminger per anlegg</CardTitle>
+            <CardTitle>
+              Tømminger per anlegg{" "}
+              {timeFilter
+                ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
+                : ""}
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -397,7 +407,12 @@ export default function Home() {
         {/* Area: Hendelser over tid */}
         <Card>
           <CardHeader>
-            <CardTitle>Hendelser over tid</CardTitle>
+            <CardTitle>
+              Hendelser over tid{" "}
+              {timeFilter
+                ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
+                : ""}
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -438,7 +453,12 @@ export default function Home() {
         {/* Pie: Kast per fraksjon */}
         <Card>
           <CardHeader>
-            <CardTitle>Kast per fraksjon</CardTitle>
+            <CardTitle>
+              Kast per fraksjon{" "}
+              {timeFilter
+                ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
+                : ""}
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -497,7 +517,12 @@ export default function Home() {
       {/* ── Alle anlegg ── */}
       <Card>
         <CardHeader>
-          <CardTitle>Alle anlegg ({anleggOversikt.length})</CardTitle>
+          <CardTitle>
+            Alle anlegg ({anleggOversikt.length})
+            {timeFilter
+              ? ` (${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
+              : ""}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-[1fr_auto_auto] gap-x-8 gap-y-2">

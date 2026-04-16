@@ -7,6 +7,8 @@ import { BrikkeContainer } from "@/components/beholderCompoents/BrikkeContainer"
 import { BrikkeHeader } from "@/components/beholderCompoents/BrikkeHeader";
 import { Card } from "@/components/ui/card";
 import Filter, { FilterValues } from "@/components/beholderCompoents/Filter";
+import { Button } from "@/components/ui/button";
+import { MapPinned } from "lucide-react";
 
 interface BeholderData {
   id: string;
@@ -140,6 +142,12 @@ export default function Page() {
       </div>
 
       <Filter data={data} value={filters} onChange={setFilters} />
+      <Button
+        className="text-xs ml-5 font-semibold uppercase cursor-pointer"
+        variant="outline"
+      >
+        Kart <MapPinned />
+      </Button>
       <Card className="w-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
         <div className="max-h-[70vh] overflow-y-auto">
