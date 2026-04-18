@@ -21,7 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EventData {
@@ -88,7 +95,8 @@ function Page() {
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("timestamp");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 15;
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
@@ -172,7 +180,12 @@ function Page() {
     return filtered;
   }, [events, search, eventTypeFilter, sortKey, sortDir, dateFrom, dateTo]);
 
-  const visibleEvents = filteredEvents.slice(0, visibleCount);
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / perPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const visibleEvents = filteredEvents.slice(
+    (safePage - 1) * perPage,
+    safePage * perPage,
+  );
 
   return (
     <div className="container mx-auto pl-60 pt-20 pr-6 pb-12">
@@ -182,10 +195,19 @@ function Page() {
           <Input
             placeholder="Søk beholder ID..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-55"
           />
-          <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+          <Select
+            value={eventTypeFilter}
+            onValueChange={(v) => {
+              setEventTypeFilter(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="w-45">
               <SelectValue placeholder="Hendelsestype" />
             </SelectTrigger>
@@ -205,7 +227,7 @@ function Page() {
               value={dateFrom}
               onChange={(e) => {
                 setDateFrom(e.target.value);
-                setVisibleCount(20);
+                setCurrentPage(1);
               }}
               className="w-40"
             />
@@ -217,7 +239,7 @@ function Page() {
               value={dateTo}
               onChange={(e) => {
                 setDateTo(e.target.value);
-                setVisibleCount(20);
+                setCurrentPage(1);
               }}
               className="w-40"
             />
@@ -228,11 +250,11 @@ function Page() {
       <Card>
         <CardHeader>
           <CardTitle>Hendelser ({filteredEvents.length})</CardTitle>
-          {visibleCount < filteredEvents.length && (
-            <p className="text-sm text-muted-foreground">
-              Viser {visibleCount} av {filteredEvents.length}
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground">
+            Viser {(safePage - 1) * perPage + 1}–
+            {Math.min(safePage * perPage, filteredEvents.length)} av{" "}
+            {filteredEvents.length}
+          </p>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -337,13 +359,26 @@ function Page() {
               </TableBody>
             </Table>
           )}
-          {visibleCount < filteredEvents.length && (
-            <div className="flex justify-center mt-4">
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
               <Button
                 variant="outline"
-                onClick={() => setVisibleCount((prev) => prev + 20)}
+                size="icon"
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
               >
-                Vis mer
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Side {safePage} av {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={safePage >= totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}

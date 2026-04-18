@@ -1,12 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import getAll from "@/Actions/getAll";
 import { BrikkeContainer } from "@/components/beholderCompoents/BrikkeContainer";
 import { BrikkeHeader } from "@/components/beholderCompoents/BrikkeHeader";
 import { Card } from "@/components/ui/card";
 import Filter, { FilterValues } from "@/components/beholderCompoents/Filter";
+import { Button } from "@/components/ui/button";
+import { MapPinned, Loader2 } from "lucide-react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import type { MapBeholder } from "@/components/beholderCompoents/MapLocations";
+
+const MapLocations = dynamic(
+  () => import("@/components/beholderCompoents/MapLocations"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center h-full w-full">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">Laster kart...</p>
+      </div>
+    ),
+  },
+);
 
 interface BeholderData {
   id: string;
@@ -19,6 +43,7 @@ interface BeholderData {
   fraksjonNavn: string;
   fraksjonType: string;
   anleggNavn: string;
+  koordinater?: { lat: number; long: number };
 }
 
 export default function Page() {
@@ -94,10 +119,27 @@ export default function Page() {
 
     const fraksjonMatch =
       filters.fraksjoner.length === 0 ||
-      filters.fraksjoner.includes(item.fraksjonId);
+      filters.fraksjoner.includes(item.fraksjonNavn);
 
     return externalSystemMatch && stationMatch && anleggMatch && fraksjonMatch;
   });
+
+  const beholdereWithCoords: MapBeholder[] = useMemo(
+    () =>
+      filteredData
+        .filter(
+          (b) => b.koordinater?.lat != null && b.koordinater?.long != null,
+        )
+        .map((b) => ({
+          id: b.id,
+          anleggNavn: b.anleggNavn,
+          fraksjonNavn: b.fraksjonNavn,
+          stasjonNavn: b.stasjonNavn,
+          lat: b.koordinater!.lat,
+          lng: b.koordinater!.long,
+        })),
+    [filteredData],
+  );
 
   // Sortér filtrert data basert på sortBy og sortAsc
   const sortedData = [...filteredData].sort((a, b) => {
@@ -140,6 +182,26 @@ export default function Page() {
       </div>
 
       <Filter data={data} value={filters} onChange={setFilters} />
+      <Drawer>
+        <DrawerTrigger asChild>
+          <Button
+            className="text-xs ml-5 font-semibold uppercase cursor-pointer"
+            variant="outline"
+          >
+            Kart <MapPinned />
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>
+              Beholdere på kart ({beholdereWithCoords.length})
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 px-4 pb-4 h-full">
+            <MapLocations beholdere={beholdereWithCoords} />
+          </div>
+        </DrawerContent>
+      </Drawer>
       <Card className="w-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
         <div className="max-h-[70vh] overflow-y-auto">
