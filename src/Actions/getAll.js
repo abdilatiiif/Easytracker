@@ -3,17 +3,28 @@
 import { revalidatePath } from "next/cache";
 import { mockBeholdere } from "@/data/mockBeholdere";
 
-function mergeById(primary, fallback) {
-  const seen = new Set();
-  const merged = [];
+function mergeById(apiData, exampleData) {
+  const idsViHarSett = new Set();
+  const resultat = [];
 
-  for (const item of [...primary, ...fallback]) {
-    if (!item?.id || seen.has(item.id)) continue;
-    seen.add(item.id);
-    merged.push(item);
+  // Gå gjennom API-data først, og så eksempeldata.
+  // Da vinner API-data hvis samme id finnes i begge lister.
+  const alleBeholdere = [...apiData, ...exampleData];
+
+  for (const beholder of alleBeholdere) {
+    if (!beholder?.id) {
+      continue;
+    }
+
+    if (idsViHarSett.has(beholder.id)) {
+      continue;
+    }
+
+    idsViHarSett.add(beholder.id);
+    resultat.push(beholder);
   }
 
-  return merged;
+  return resultat;
 }
 
 export async function revalidateAdminView() {

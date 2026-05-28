@@ -12,40 +12,52 @@ function Page() {
   >({});
 
   useEffect(() => {
-    async function fetchDevices() {
+    async function hentStasjonsData() {
       const res = await getAll();
       if (res.error || !res.data) return;
 
-      const map: Record<string, string[]> = {};
-      const avfallMap: Record<string, Set<string>> = {};
+      const enheterPerStasjon: Record<string, string[]> = {};
+      const avfallPerStasjon: Record<string, Set<string>> = {};
+
       for (const beholder of res.data) {
-        const navn = beholder.stasjonNavn;
-        if (!navn) continue;
-        if (!map[navn]) map[navn] = [];
-        for (const d of beholder.externalDevices ?? []) {
-          map[navn].push(d.externalDeviceId);
+        const stasjonsNavn = beholder.stasjonNavn;
+        if (!stasjonsNavn) continue;
+
+        if (!enheterPerStasjon[stasjonsNavn]) {
+          enheterPerStasjon[stasjonsNavn] = [];
         }
+
+        for (const enhet of beholder.externalDevices ?? []) {
+          enheterPerStasjon[stasjonsNavn].push(enhet.externalDeviceId);
+        }
+
         if (beholder.fraksjonNavn) {
-          if (!avfallMap[navn]) avfallMap[navn] = new Set();
-          avfallMap[navn].add(beholder.fraksjonNavn);
+          if (!avfallPerStasjon[stasjonsNavn]) {
+            avfallPerStasjon[stasjonsNavn] = new Set();
+          }
+
+          avfallPerStasjon[stasjonsNavn].add(beholder.fraksjonNavn);
         }
       }
 
-      // Sort device IDs numerically within each stasjon
-      for (const key of Object.keys(map)) {
-        map[key].sort((a: string, b: string) => Number(a) - Number(b));
+      for (const stasjonsNavn of Object.keys(enheterPerStasjon)) {
+        enheterPerStasjon[stasjonsNavn].sort(
+          (a: string, b: string) => Number(a) - Number(b),
+        );
       }
 
-      const avfallResult: Record<string, string[]> = {};
-      for (const key of Object.keys(avfallMap)) {
-        avfallResult[key] = Array.from(avfallMap[key]).sort();
+      const avfallResultat: Record<string, string[]> = {};
+      for (const stasjonsNavn of Object.keys(avfallPerStasjon)) {
+        avfallResultat[stasjonsNavn] = Array.from(
+          avfallPerStasjon[stasjonsNavn],
+        ).sort();
       }
 
-      setStasjoner(Object.keys(map).sort());
-
-      setStasjonAvfallstyper(avfallResult);
+      setStasjoner(Object.keys(enheterPerStasjon).sort());
+      setStasjonAvfallstyper(avfallResultat);
     }
-    fetchDevices();
+
+    hentStasjonsData();
   }, []);
 
   return (
