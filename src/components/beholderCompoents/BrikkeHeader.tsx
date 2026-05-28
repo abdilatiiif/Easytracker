@@ -51,10 +51,10 @@ function Column({
 
 export function BrikkeHeader({ onSort, sortBy, sortAsc }: BrikkeHeaderProps) {
   return (
-    <div className="sticky top-0 z-10 bg-muted/50 backdrop-blur-sm border-b border-border px-6 py-3">
+    <div className="sticky top-0 z-10 border-b border-border bg-muted/50 px-6 py-3 backdrop-blur-sm">
       <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-6 items-center">
         <Column
-          label="Beholder-ID"
+          label="ID"
           column="id"
           onSort={onSort}
           sortBy={sortBy}
@@ -75,15 +75,15 @@ export function BrikkeHeader({ onSort, sortBy, sortAsc }: BrikkeHeaderProps) {
           sortAsc={sortAsc}
         />
         <Column
-          label="Avfallstype"
+          label="Fraksjon"
           column="fraksjonNavn"
           onSort={onSort}
           sortBy={sortBy}
           sortAsc={sortAsc}
           className="justify-center"
         />
-        <div className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground text-right">
-          Fraksjon
+        <div className="text-right text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Symbol
         </div>
       </div>
     </div>

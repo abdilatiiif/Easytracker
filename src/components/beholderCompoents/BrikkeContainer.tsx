@@ -34,10 +34,9 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
 
   return (
     <div
-      className="group w-full grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-6 px-6 py-3.5 items-center border-b border-border/40 cursor-pointer transition-colors duration-150 hover:bg-accent/60"
+      className="group grid w-full grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-6 border-b border-border/40 px-6 py-3.5 transition-colors hover:bg-accent/60"
       onClick={() => router.push(`/beholdere/${data.id}`)}
     >
-      {/* ID */}
       <div
         className="text-sm font-mono text-muted-foreground truncate"
         title={data.id}
@@ -45,12 +44,10 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
         {data.id.slice(0, 8)}
       </div>
 
-      {/* Anlegg */}
       <div className="text-sm text-foreground truncate" title={data.anleggNavn}>
         {data.anleggNavn}
       </div>
 
-      {/* Stasjon */}
       <div
         className="text-sm font-medium text-foreground truncate"
         title={data.stasjonNavn}
@@ -58,7 +55,6 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
         {data.stasjonNavn}
       </div>
 
-      {/* Fraksjon badge */}
       <div className="flex justify-center">
         <Badge
           variant="outline"
@@ -68,7 +64,6 @@ export function BrikkeContainer({ data }: { data: BeholderData }) {
         </Badge>
       </div>
 
-      {/* Fraksjon ikon + chevron */}
       <div className="flex items-center justify-end gap-3">
         <Image
           width={28}

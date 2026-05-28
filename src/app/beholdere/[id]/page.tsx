@@ -6,29 +6,20 @@ import getAll from "@/Actions/getAll";
 import getBeholderById from "@/Actions/getBeholderById";
 import getAllEvents from "@/Actions/getAllEvents";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   MapPin,
   Clock,
-  User,
-  ScrollText,
   CalendarClock,
-  Trash2,
-  Building,
+  ScrollText,
+  BatteryFull,
+  Building2,
   Fingerprint,
   Server,
-  BatteryFull,
   LockOpen,
   Loader2,
 } from "lucide-react";
@@ -52,6 +43,7 @@ interface BeholderData {
   anleggNavn: string;
   fraksjonNavn: string;
   fraksjonId: string;
+  koordinater?: { lat: number; long: number };
   externalDevices: {
     externalDeviceId: string;
     externalDeviceName: string;
@@ -78,6 +70,8 @@ export default function BeholderDetailPage() {
     lng: number;
   } | null>(null);
 
+  const beholderId = typeof params.id === "string" ? params.id : params.id?.[0];
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -87,14 +81,13 @@ export default function BeholderDetailPage() {
           return;
         }
         const beholder = res.data.find(
-          (item: BeholderData) => item.id === params.id,
+          (item: BeholderData) => item.id === beholderId,
         );
         if (!beholder) {
           setError("Beholder ikke funnet");
           return;
         }
         setData(beholder);
-        console.log("Beholder data:", beholder);
         if (
           beholder.koordinater?.lat != null &&
           beholder.koordinater?.long != null
@@ -105,33 +98,30 @@ export default function BeholderDetailPage() {
           });
         }
       } catch {
-        setError("Feil ved lasting av data");
+        setError("Klarte ikke å laste beholderen");
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [params.id]);
+  }, [beholderId]);
 
   useEffect(() => {
     async function fetchDeviceDetails() {
       try {
-        const res = await getBeholderById(params.id);
+        if (!beholderId) return;
+
+        const res = await getBeholderById(beholderId);
         if (res.error) {
-          console.error("Error fetching beholder details:", res.error);
           return;
         }
 
         const beholderDetails = res.data;
         if (beholderDetails && beholderDetails.externalDevices) {
           const levels: Record<string, number> = {};
-          const comms: Record<string, string> = {};
           for (const device of beholderDetails.externalDevices) {
             if (device.batteryLevel !== undefined) {
               levels[device.externalDeviceId] = device.batteryLevel;
-            }
-            if (device.latestCommunication) {
-              comms[device.externalDeviceId] = device.latestCommunication;
             }
           }
           setBatteryLevels(levels);
@@ -143,10 +133,12 @@ export default function BeholderDetailPage() {
 
     async function fetchLastCommunication() {
       try {
+        if (!beholderId) return;
+
         const res = await getAllEvents();
         if (res.error || !res.data) return;
         const event = res.data.find(
-          (e: { beholderId: string }) => e.beholderId === params.id,
+          (e: { beholderId: string }) => e.beholderId === beholderId,
         );
         if (event?.timestamp) {
           setLastCommunication(event.timestamp);
@@ -158,15 +150,15 @@ export default function BeholderDetailPage() {
 
     fetchDeviceDetails();
     fetchLastCommunication();
-  }, [params.id]);
+  }, [beholderId]);
 
   if (loading) {
     return (
-      <div className="container mx-auto pl-60 pt-15 pr-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-80 col-span-2" />
-          <Skeleton className="h-80" />
+      <div className="container mx-auto min-h-[60vh] space-y-6 px-6 py-10 lg:pl-60">
+        <Skeleton className="h-10 w-72" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Skeleton className="h-72 lg:col-span-2" />
+          <Skeleton className="h-72" />
         </div>
       </div>
     );
@@ -174,7 +166,7 @@ export default function BeholderDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="container mx-auto pl-60 pt-15 pr-6">
+      <div className="container mx-auto px-6 py-10 lg:pl-60">
         <Button
           variant="ghost"
           className="mb-4"
@@ -200,221 +192,221 @@ export default function BeholderDetailPage() {
     "bg-green-100 text-green-800 border-green-200";
 
   function getEvents() {
-    router.push(`/beholdere/${params.id}/event`);
-    console.log("Hent event logs for beholder:", params.id);
+    router.push(`/beholdere/${beholderId}/event`);
   }
 
-  // MAP from leaflet
-
   return (
-    <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 space-y-6">
-      {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/beholdere")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {data.stasjonNavn}
-            </h1>
-            <p className="text-sm text-muted-foreground font-mono">{data.id}</p>
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto space-y-6 px-6 py-10 lg:pl-60">
+        <section className="rounded-3xl border bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/beholdere")}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Tilbake
+              </Button>
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                  {data.stasjonNavn}
+                </h1>
+                <p className="text-sm text-slate-500 font-mono">{data.id}</p>
+              </div>
+              <p className="text-sm text-slate-600">
+                Enkel detaljside for denne beholderen.
+              </p>
+            </div>
+
+            <Badge className={`w-fit text-sm px-3 py-1 ${badgeFarge}`}>
+              {data.fraksjonNavn}
+            </Badge>
           </div>
-        </div>
-        <Badge className={`text-sm px-3 py-1 ${badgeFarge}`}>
-          {data.fraksjonNavn}
-        </Badge>
-      </div>
+        </section>
 
-      <Separator />
-
-      {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column - Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Beholder Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Beholder informasjon</CardTitle>
-              <CardDescription>Detaljer om denne beholderen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8">
-                <InfoRow
-                  icon={<Fingerprint className="h-4 w-4" />}
-                  label="Beholder ID"
-                  value={data.id}
-                  mono
-                />
-                <InfoRow
-                  icon={<Server className="h-4 w-4" />}
-                  label="Stasjon ID"
-                  value={data.stasjonId}
-                  mono
-                />
-                <InfoRow
-                  icon={<MapPin className="h-4 w-4" />}
-                  label="Stasjon"
-                  value={data.stasjonNavn}
-                />
-                <InfoRow
-                  icon={<Building className="h-4 w-4" />}
-                  label="Anlegg"
-                  value={data.anleggNavn}
-                />
-                <InfoRow
-                  icon={<Trash2 className="h-4 w-4" />}
-                  label="Fraksjon"
-                  value={data.fraksjonNavn}
-                />
-              </div>
-
-              {/* Fraksjon icon */}
-              <div className="mt-6 flex items-center gap-3">
-                <Image
-                  width={48}
-                  height={48}
-                  src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonId}.png`}
-                  alt={data.fraksjonNavn}
-                  className="rounded-xl"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Avfallssymbol for {data.fraksjonNavn}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Map */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" /> Kart
-              </CardTitle>
-              <CardDescription>Plassering av beholderen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {koordinater ? (
-                <div className="w-full h-80 rounded-lg overflow-hidden border border-border">
-                  <Map lat={koordinater.lat} lng={koordinater.lng} />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Det viktigste</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <InfoRow
+                    icon={<Fingerprint className="h-4 w-4" />}
+                    label="Beholder ID"
+                    value={data.id}
+                    mono
+                  />
+                  <InfoRow
+                    icon={<Server className="h-4 w-4" />}
+                    label="Stasjon ID"
+                    value={data.stasjonId}
+                    mono
+                  />
+                  <InfoRow
+                    icon={<MapPin className="h-4 w-4" />}
+                    label="Stasjon"
+                    value={data.stasjonNavn}
+                  />
+                  <InfoRow
+                    icon={<Building2 className="h-4 w-4" />}
+                    label="Anlegg"
+                    value={data.anleggNavn}
+                  />
+                  <InfoRow
+                    icon={<ScrollText className="h-4 w-4" />}
+                    label="Fraksjon"
+                    value={data.fraksjonNavn}
+                  />
                 </div>
-              ) : (
-                <div className="w-full h-64 rounded-lg bg-muted flex items-center justify-center border border-dashed border-border">
-                  <p className="text-sm text-muted-foreground">
-                    Ingen koordinater tilgjengelig for denne beholderen
-                  </p>
+
+                <div className="mt-6 flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
+                  <Image
+                    width={48}
+                    height={48}
+                    src={`https://komteksky.norkart.no/MinRenovasjon.Api/avfallssymboler/${data.fraksjonId}.png`}
+                    alt={data.fraksjonNavn}
+                    className="rounded-xl"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      Avfallssymbol
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Bildet viser symbolet for {data.fraksjonNavn}.
+                    </p>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
 
-        {/* Right column - Status & Actions */}
-        <div className="space-y-6">
-          {/* Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" /> Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-xs uppercase text-muted-foreground tracking-wider mb-1">
-                  Siste kommunikasjon
-                </p>
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                  {lastCommunication
-                    ? new Date(lastCommunication).toLocaleString("nb-NO")
-                    : "Ingen data tilgjengelig"}
-                </p>
-              </div>
-              <Separator />
-              <div>
-                <p className="text-xs uppercase text-muted-foreground tracking-wider mb-1">
-                  Sist brukt av
-                </p>
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  Ingen data tilgjengelig
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* External Devices */}
-          {data.externalDevices && data.externalDevices.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BatteryFull className="h-5 w-5" /> Batterinivå
+                  <MapPin className="h-5 w-5" /> Kart
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {data.externalDevices.map((device, i) => {
-                  const level = batteryLevels[device.externalDeviceId] ?? null;
-                  const barColor =
-                    level === null
-                      ? "bg-muted-foreground/30"
-                      : level > 50
-                        ? "bg-green-500"
-                        : level > 20
-                          ? "bg-yellow-500"
-                          : "bg-red-500";
-                  return (
-                    <div key={i} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">
-                          {device.externalDeviceName ?? `Enhet ${i + 1}`}
-                        </span>
-                        <span className="text-muted-foreground font-mono text-xs">
-                          {level !== null ? `${level}%` : "Ingen data"}
-                        </span>
-                      </div>
-                      <div className="h-2.5 w-full rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full transition-all ${barColor}`}
-                          style={{ width: level !== null ? `${level}%` : "0%" }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {device.externalDeviceId}
-                      </p>
-                    </div>
-                  );
-                })}
+              <CardContent>
+                {koordinater ? (
+                  <div className="h-80 w-full overflow-hidden rounded-2xl border border-border">
+                    <Map lat={koordinater.lat} lng={koordinater.lng} />
+                  </div>
+                ) : (
+                  <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-border bg-slate-50">
+                    <p className="text-sm text-slate-500">
+                      Ingen koordinater er registrert for denne beholderen.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
+          </div>
 
-          {/* Action buttons */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Handlinger</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                onClick={() => getEvents()}
-                variant="outline"
-                className="w-full justify-start gap-2 cursor-pointer"
-              >
-                <ScrollText className="h-4 w-4" />
-                Event Logs
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2 bg-green-300 cursor-pointer"
-              >
-                <LockOpen className="h-4 w-4" />
-                Åpne beholder
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" /> Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wider text-slate-500">
+                    Siste kommunikasjon
+                  </p>
+                  <p className="mt-2 flex items-center gap-2 font-medium text-slate-900">
+                    <CalendarClock className="h-4 w-4 text-slate-500" />
+                    {lastCommunication
+                      ? new Date(lastCommunication).toLocaleString("nb-NO")
+                      : "Ingen data"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wider text-slate-500">
+                    Sist brukt av
+                  </p>
+                  <p className="mt-2 text-slate-900">Ingen data tilgjengelig</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {data.externalDevices && data.externalDevices.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BatteryFull className="h-5 w-5" /> Batteri
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {data.externalDevices.map((device, index) => {
+                    const level =
+                      batteryLevels[device.externalDeviceId] ?? null;
+                    const barColor =
+                      level === null
+                        ? "bg-slate-300"
+                        : level > 50
+                          ? "bg-emerald-500"
+                          : level > 20
+                            ? "bg-amber-500"
+                            : "bg-red-500";
+
+                    return (
+                      <div
+                        key={device.externalDeviceId}
+                        className="space-y-2 rounded-2xl bg-slate-50 p-4"
+                      >
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-slate-900">
+                            {device.externalDeviceName ?? `Enhet ${index + 1}`}
+                          </span>
+                          <span className="font-mono text-xs text-slate-500">
+                            {level !== null ? `${level}%` : "Ingen data"}
+                          </span>
+                        </div>
+                        <div className="h-2.5 w-full rounded-full bg-slate-200">
+                          <div
+                            className={`h-full rounded-full ${barColor}`}
+                            style={{
+                              width: level !== null ? `${level}%` : "0%",
+                            }}
+                          />
+                        </div>
+                        <p className="font-mono text-xs text-slate-500">
+                          {device.externalDeviceId}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Handlinger</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  onClick={getEvents}
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                >
+                  <ScrollText className="h-4 w-4" />
+                  Se eventlogg
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2 bg-emerald-100"
+                >
+                  <LockOpen className="h-4 w-4" />
+                  Åpne beholder
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
