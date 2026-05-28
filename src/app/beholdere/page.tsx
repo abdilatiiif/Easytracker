@@ -88,7 +88,7 @@ export default function Page() {
   const normaliser = (value: string) => value.trim().toLowerCase();
 
   const filteredData = useMemo(() => {
-    const base = globalQuery
+    const BeholderDataBoks = globalQuery
       ? data.filter((item) => {
           const searchable = [
             item.id,
@@ -105,7 +105,7 @@ export default function Page() {
         })
       : data;
 
-    return base.filter((item) => {
+    return BeholderDataBoks.filter((item) => {
       const externalSystemMatch =
         normaliser(filters.externalSystem) === "" ||
         item.externalSystem
