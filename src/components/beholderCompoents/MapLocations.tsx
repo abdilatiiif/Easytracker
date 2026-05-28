@@ -45,13 +45,12 @@ export default function MapLocations({
 
   if (beholdere.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        Ingen beholdere med koordinater funnet.
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Ingen beholdere med kartpunkt ble funnet.
       </div>
     );
   }
 
-  // Beregn senterpunkt
   const avgLat = beholdere.reduce((s, b) => s + b.lat, 0) / beholdere.length;
   const avgLng = beholdere.reduce((s, b) => s + b.lng, 0) / beholdere.length;
 
@@ -69,8 +68,8 @@ export default function MapLocations({
       {beholdere.map((b) => (
         <Marker key={b.id} position={[b.lat, b.lng]}>
           <Popup>
-            <div className="space-y-1 min-w-45">
-              <p className="font-semibold text-sm">{b.anleggNavn}</p>
+            <div className="min-w-44 space-y-1">
+              <p className="text-sm font-semibold">{b.anleggNavn}</p>
               <p className="text-xs text-muted-foreground">
                 {b.fraksjonNavn} · {b.stasjonNavn}
               </p>
@@ -80,7 +79,7 @@ export default function MapLocations({
                 className="w-full mt-1 text-xs"
                 onClick={() => router.push(`/beholdere/${b.id}`)}
               >
-                Gå til beholder
+                Åpne beholder
               </Button>
             </div>
           </Popup>

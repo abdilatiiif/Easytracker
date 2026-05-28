@@ -1,52 +1,26 @@
 "use client";
 
-import { Fragment, useEffect, useState, useMemo } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import getAll from "@/Actions/getAll";
 import getDashboardStats from "@/Actions/getDashboardStats";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  AreaChart,
-  Area,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Package,
-  Building,
-  Recycle,
-  TrendingUp,
+  ArrowRight,
+  Building2,
+  Clock3,
   Loader2,
-  ChevronDown,
-  BarChart3,
-  PieChartIcon,
-  Activity,
+  Package,
+  RefreshCw,
+  ShieldCheck,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface BeholderData {
   id: string;
-  fraksjonNavn: string;
   anleggNavn: string;
+  stasjonNavn: string;
+  fraksjonNavn: string;
 }
 
 interface DashboardStats {
@@ -54,881 +28,274 @@ interface DashboardStats {
   eventsOverTime: { date: string; antall: number }[];
 }
 
-const COLORS = [
-  "#6366f1",
-  "#f59e0b",
-  "#10b981",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#14b8a6",
-  "#f97316",
-  "#3b82f6",
-  "#84cc16",
-];
-
-type TimeFilter = "7d" | "14d" | "30d" | "2m" | "3m" | "6m" | null;
-
-const TIME_FILTERS: { key: TimeFilter; label: string; days: number }[] = [
-  { key: "7d", label: "Siste 7 dager", days: 7 },
-  { key: "14d", label: "Siste 14 dager", days: 14 },
-  { key: "30d", label: "Siste 30 dager", days: 30 },
-  { key: "2m", label: "Siste 2 mnd", days: 60 },
-  { key: "3m", label: "Siste 3 mnd", days: 90 },
-  { key: "6m", label: "Siste 6 mnd", days: 180 },
-];
-
-function getCutoffDate(filter: TimeFilter): string {
-  const d = new Date();
-  const match = TIME_FILTERS.find((f) => f.key === filter);
-  if (match) d.setDate(d.getDate() - match.days);
-  return d.toISOString().slice(0, 10);
-}
-
-const FILL_LEVEL_DATA: {
-  anlegg: string;
-  fraksjoner: { name: string; fill: number; color: string }[];
-}[] = [
-  {
-    anlegg: "Sentrum Sør",
-    fraksjoner: [
-      { name: "Restavfall", fill: 85, color: "#ef4444" },
-      { name: "Papir", fill: 42, color: "#3b82f6" },
-      { name: "Plast", fill: 67, color: "#f59e0b" },
-      { name: "Glass/Metall", fill: 23, color: "#10b981" },
-    ],
-  },
-  {
-    anlegg: "Sentrum Nord",
-    fraksjoner: [
-      { name: "Restavfall", fill: 91, color: "#ef4444" },
-      { name: "Papir", fill: 55, color: "#3b82f6" },
-      { name: "Plast", fill: 38, color: "#f59e0b" },
-      { name: "Glass/Metall", fill: 72, color: "#10b981" },
-    ],
-  },
-  {
-    anlegg: "Havneparken",
-    fraksjoner: [
-      { name: "Restavfall", fill: 34, color: "#ef4444" },
-      { name: "Papir", fill: 78, color: "#3b82f6" },
-      { name: "Plast", fill: 50, color: "#f59e0b" },
-      { name: "Glass/Metall", fill: 15, color: "#10b981" },
-    ],
-  },
-  {
-    anlegg: "Fjordveien",
-    fraksjoner: [
-      { name: "Restavfall", fill: 60, color: "#ef4444" },
-      { name: "Papir", fill: 20, color: "#3b82f6" },
-      { name: "Plast", fill: 88, color: "#f59e0b" },
-      { name: "Glass/Metall", fill: 45, color: "#10b981" },
-    ],
-  },
-];
-
 export default function Home() {
   const [beholdere, setBeholdere] = useState<BeholderData[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("14d");
-  const [showAllAnlegg, setShowAllAnlegg] = useState(false);
-  const [innkastChartView, setInnkastChartView] = useState<"pie" | "bar">(
-    "pie",
-  );
-  const [sorteringView, setSorteringView] = useState<"bar" | "pie" | "radar">(
-    "bar",
-  );
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
   useEffect(() => {
     async function fetchData() {
-      const [bRes, sRes] = await Promise.all([getAll(), getDashboardStats()]);
-      if (bRes.data) setBeholdere(bRes.data);
-      if (sRes.data) setStats(sRes.data as DashboardStats);
-      setLastFetched(new Date());
-      setLoading(false);
+      try {
+        const [bRes, sRes] = await Promise.all([getAll(), getDashboardStats()]);
+
+        if (bRes.data) {
+          setBeholdere(bRes.data);
+        }
+
+        if (sRes.data) {
+          setStats(sRes.data as DashboardStats);
+        }
+
+        setLastFetched(new Date());
+      } finally {
+        setLoading(false);
+      }
     }
+
     fetchData();
   }, []);
 
-  // Siste kommunikasjon (nyeste event-dato)
-  const sistKommunikasjon = useMemo(() => {
-    if (!stats?.eventsOverTime?.length) return null;
-    return stats.eventsOverTime[stats.eventsOverTime.length - 1].date;
-  }, [stats]);
-
-  // ── Maps ──
-  const beholderAnleggMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    beholdere.forEach((b) => (m[b.id] = b.anleggNavn));
-    return m;
-  }, [beholdere]);
-
-  const beholderFraksjonMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    beholdere.forEach((b) => (m[b.id] = b.fraksjonNavn));
-    return m;
-  }, [beholdere]);
-
-  // ── Filter eventsOverTime by time range ──
-  const filteredEventsOverTime = useMemo(() => {
-    if (!stats) return [];
-    if (!timeFilter) return stats.eventsOverTime;
-    const cutoff = getCutoffDate(timeFilter);
-    return stats.eventsOverTime.filter((e) => e.date >= cutoff);
-  }, [stats, timeFilter]);
-
-  // ── Aggregate kastPerBeholder filtered by time ──
-  const kastPerBeholder = useMemo(() => {
-    if (!stats) return {};
-    const cutoff = timeFilter ? getCutoffDate(timeFilter) : null;
-    const result: Record<string, number> = {};
-    Object.entries(stats.kastPerBeholderPerDag).forEach(([day, beholdere]) => {
-      if (cutoff && day < cutoff) return;
-      Object.entries(beholdere).forEach(([beholderId, kast]) => {
-        result[beholderId] = (result[beholderId] || 0) + kast;
-      });
-    });
-    return result;
-  }, [stats, timeFilter]);
-
-  // Total innkast (filtrert)
-  const totalInnkast = useMemo(
-    () => Object.values(kastPerBeholder).reduce((sum, n) => sum + n, 0),
-    [kastPerBeholder],
-  );
-
-  // Innkast per anlegg
-  const innkastPerAnlegg = useMemo(() => {
-    const counts: Record<string, number> = {};
-    Object.entries(kastPerBeholder).forEach(([beholderId, kast]) => {
-      const anlegg = beholderAnleggMap[beholderId] ?? "Ukjent";
-      counts[anlegg] = (counts[anlegg] || 0) + kast;
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [kastPerBeholder, beholderAnleggMap]);
-
-  // Kast per fraksjon
-  const kastPerFraksjon = useMemo(() => {
-    const counts: Record<string, number> = {};
-    Object.entries(kastPerBeholder).forEach(([beholderId, kast]) => {
-      const fraksjon = beholderFraksjonMap[beholderId] ?? "Ukjent";
-      counts[fraksjon] = (counts[fraksjon] || 0) + kast;
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [kastPerBeholder, beholderFraksjonMap]);
-
-  // Unique anlegg count
-  const uniqueAnlegg = useMemo(
+  const totalBeholdere = beholdere.length;
+  const antallAnlegg = useMemo(
     () => new Set(beholdere.map((b) => b.anleggNavn)).size,
     [beholdere],
   );
 
-  // Alle anlegg med stats
-  const anleggOversikt = useMemo(() => {
-    const map: Record<string, { beholdere: number; kast: number }> = {};
-    beholdere.forEach((b) => {
-      if (!map[b.anleggNavn]) map[b.anleggNavn] = { beholdere: 0, kast: 0 };
-      map[b.anleggNavn].beholdere += 1;
-    });
-    Object.entries(kastPerBeholder).forEach(([beholderId, kast]) => {
-      const anlegg = beholderAnleggMap[beholderId] ?? "Ukjent";
-      if (!map[anlegg]) map[anlegg] = { beholdere: 0, kast: 0 };
-      map[anlegg].kast += kast;
-    });
-    return Object.entries(map)
-      .map(([name, s]) => ({ name, ...s }))
-      .sort((a, b) => b.kast - a.kast);
-  }, [beholdere, kastPerBeholder, beholderAnleggMap]);
+  const totalHendelser = useMemo(
+    () => stats?.eventsOverTime.reduce((sum, dag) => sum + dag.antall, 0) ?? 0,
+    [stats],
+  );
 
-  // Sorteringsgrad per anlegg (andel kast som ikke er restavfall)
-  const sorteringsgradPerAnlegg = useMemo(() => {
-    const anleggTotalt: Record<string, number> = {};
-    const anleggRestavfall: Record<string, number> = {};
+  const sisteHendelse = stats?.eventsOverTime.at(-1)?.date ?? null;
 
-    Object.entries(kastPerBeholder).forEach(([beholderId, kast]) => {
-      const anlegg = beholderAnleggMap[beholderId] ?? "Ukjent";
-      const fraksjon = (beholderFraksjonMap[beholderId] ?? "").toLowerCase();
-      anleggTotalt[anlegg] = (anleggTotalt[anlegg] || 0) + kast;
-      if (fraksjon.includes("restavfall") || fraksjon.includes("rest")) {
-        anleggRestavfall[anlegg] = (anleggRestavfall[anlegg] || 0) + kast;
-      }
-    });
-
-    return Object.entries(anleggTotalt)
-      .map(([name, totalt]) => {
-        const restavfall = anleggRestavfall[name] || 0;
-        const sortert = totalt - restavfall;
-        const grad = totalt > 0 ? Math.round((sortert / totalt) * 100) : 0;
-        return { name, grad, sortert, restavfall, totalt };
-      })
-      .sort((a, b) => b.grad - a.grad);
-  }, [kastPerBeholder, beholderAnleggMap, beholderFraksjonMap]);
+  const sisteBeholdere = useMemo(() => beholdere.slice(0, 5), [beholdere]);
 
   if (loading) {
     return (
-      <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div className="container mx-auto flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 py-20">
         <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-        <p className="text-muted-foreground text-sm">Laster dashbord...</p>
+        <p className="text-sm text-muted-foreground">Laster forsiden...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-green-50">
-      <div className="container mx-auto pl-60 pt-20 pr-6 pb-12 space-y-8">
-        {/* ── Fast tidsfilter ── */}
-        <div
-          className="fixed top-10 left-50 right-0 z-40 flex items-center justify-end"
-          style={{ padding: 25 }}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                {timeFilter
-                  ? TIME_FILTERS.find((f) => f.key === timeFilter)?.label
-                  : "Alle"}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setTimeFilter(null)}>
-                Alle
-              </DropdownMenuItem>
-              {TIME_FILTERS.map((f) => (
-                <DropdownMenuItem
-                  key={f.key}
-                  onClick={() => setTimeFilter(f.key)}
-                >
-                  {f.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto px-6 py-10 md:py-14 lg:pl-60">
+        <div className="mx-auto max-w-6xl space-y-6">
+          <section className="rounded-3xl border bg-white p-6 shadow-sm md:p-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-2xl space-y-4">
+                <span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  Easytracker
+                </span>
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">
+                    Enkel oversikt over beholdere og hendelser
+                  </h1>
+                  <p className="text-base leading-7 text-slate-600 md:text-lg">
+                    Her får du en rask status på systemet. Siden er laget for å
+                    være lett å lese, lett å bruke og enkel å bygge videre på.
+                  </p>
+                </div>
 
-        {/* ── Velkomst ── */}
-        <div className="rounded-xl bg-linear-to-r from-green-700 via-emerald-700 to-teal-700 p-8 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-                {now.getHours() < 12
-                  ? "God morgen"
-                  : now.getHours() < 18
-                    ? "God ettermiddag"
-                    : "God kveld"}{" "}
-                👋
-              </h1>
-              <p className="mt-2 text-white/90 text-base md:text-lg">
-                {now.toLocaleDateString("nb-NO", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-                {" · "}
-                {now.toLocaleTimeString("nb-NO", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
-              </p>
-              <p className="mt-1 text-white/70 text-sm">
-                Sist kommunikasjon:{" "}
-                {sistKommunikasjon
-                  ? new Date(sistKommunikasjon).toLocaleDateString("nb-NO", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "—"}
-                {lastFetched && (
-                  <>
-                    {" · "}Hentet{" "}
-                    {lastFetched.toLocaleTimeString("nb-NO", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── KPI-kort ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-24 w-24 -mr-4 -mt-4 rounded-full bg-indigo-100 opacity-50" />
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Antall innkast
-              </CardTitle>
-              <Recycle className="h-5 w-5 text-indigo-500" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-indigo-600">
-                {totalInnkast}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <TrendingUp className="h-3 w-3" /> I valgt periode
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-24 w-24 -mr-4 -mt-4 rounded-full bg-emerald-100 opacity-50" />
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Totalt beholdere
-              </CardTitle>
-              <Package className="h-5 w-5 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-emerald-600">
-                {beholdere.length}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Registrert i systemet
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-24 w-24 -mr-4 -mt-4 rounded-full bg-amber-100 opacity-50" />
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Aktive anlegg
-              </CardTitle>
-              <Building className="h-5 w-5 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-amber-600">
-                {uniqueAnlegg}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Med tilknyttede beholdere
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ── Charts row 1 ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Innkast per anlegg (veksle mellom kake/graf) */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>
-                Innkast per anlegg{" "}
-                {timeFilter
-                  ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
-                  : ""}
-              </CardTitle>
-              <div className="flex gap-1">
-                <Button
-                  variant={innkastChartView === "pie" ? "default" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setInnkastChartView("pie")}
-                >
-                  <PieChartIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={innkastChartView === "bar" ? "default" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setInnkastChartView("bar")}
-                >
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild>
+                    <Link href="/beholdere">
+                      Se beholdere
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/sistehendelser">Se siste hendelser</Link>
+                  </Button>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="h-80">
-              {innkastChartView === "pie" ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={innkastPerAnlegg}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={110}
-                      paddingAngle={2}
-                    >
-                      {innkastPerAnlegg.map((_, i) => (
-                        <Cell
-                          key={`cell-${i}`}
-                          fill={COLORS[i % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      defaultIndex={0}
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0].payload;
-                        const idx = innkastPerAnlegg.findIndex(
-                          (a) => a.name === d.name,
-                        );
-                        const total = innkastPerAnlegg.reduce(
-                          (s, a) => s + a.value,
-                          0,
-                        );
-                        const pct = total
-                          ? ((d.value / total) * 100).toFixed(1)
-                          : "0";
-                        return (
-                          <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                            <p className="font-semibold">
-                              #{idx + 1} {d.name}
-                            </p>
-                            <p className="text-muted-foreground">
-                              {d.value} innkast ({pct}%)
-                            </p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={innkastPerAnlegg}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 12 }}
-                      angle={-20}
-                      textAnchor="end"
-                      height={60}
-                    />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip
-                      defaultIndex={0}
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-                        const val = payload[0].value;
-                        const idx = innkastPerAnlegg.findIndex(
-                          (a) => a.name === label,
-                        );
-                        return (
-                          <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                            <p className="font-semibold">
-                              #{idx + 1} {label}
-                            </p>
-                            <p className="text-muted-foreground">
-                              {val} innkast
-                            </p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-          {/* Fraksjon fyllnivå per anlegg */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Fyllnivå per fraksjon</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Estimert fyllgrad per beholder (eksempeldata)
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-5">
-                {FILL_LEVEL_DATA.map((anlegg) => (
-                  <div key={anlegg.anlegg}>
-                    <p className="text-sm font-semibold mb-2">
-                      {anlegg.anlegg}
+
+              <div className="grid gap-3 sm:grid-cols-3 md:w-full md:max-w-md">
+                <Card className="border-emerald-100">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-slate-500">Beholdere</p>
+                      <Package className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <p className="mt-3 text-3xl font-bold text-slate-900">
+                      {totalBeholdere}
                     </p>
-                    <div className="space-y-2">
-                      {anlegg.fraksjoner.map((f) => (
-                        <div key={f.name} className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-24 shrink-0">
-                            {f.name}
-                          </span>
-                          <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{
-                                width: `${f.fill}%`,
-                                backgroundColor: f.color,
-                                opacity: f.fill > 80 ? 1 : 0.75,
-                              }}
-                            />
-                          </div>
-                          <span
-                            className={`text-xs font-medium w-10 text-right ${
-                              f.fill > 80
-                                ? "text-red-600"
-                                : f.fill > 60
-                                  ? "text-amber-600"
-                                  : "text-emerald-600"
-                            }`}
-                          >
-                            {f.fill}%
-                          </span>
-                        </div>
-                      ))}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-sky-100">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-slate-500">Anlegg</p>
+                      <Building2 className="h-4 w-4 text-sky-600" />
                     </div>
+                    <p className="mt-3 text-3xl font-bold text-slate-900">
+                      {antallAnlegg}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-amber-100">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-slate-500">Hendelser</p>
+                      <ShieldCheck className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <p className="mt-3 text-3xl font-bold text-slate-900">
+                      {totalHendelser}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Dette er siden på en enkel måte</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm text-slate-600">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-900">
+                    1. Se status raskt
+                  </p>
+                  <p>
+                    Du får en enkel oversikt over hvor mange beholdere, anlegg
+                    og hendelser som ligger i systemet.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-900">
+                    2. Gå videre dit du trenger
+                  </p>
+                  <p>
+                    Bruk knappene for å hoppe rett til beholdere eller siste
+                    hendelser.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-900">
+                    3. Hold det ryddig
+                  </p>
+                  <p>
+                    Forsiden er laget enkel, så det blir lett å legge til mer
+                    innhold senere.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Status nå</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm text-slate-600">
+                <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <Clock3 className="mt-0.5 h-4 w-4 text-slate-500" />
+                  <div>
+                    <p className="font-semibold text-slate-900">Sist hentet</p>
+                    <p>
+                      {lastFetched
+                        ? lastFetched.toLocaleString("nb-NO")
+                        : "Ukjent"}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </div>
 
-        {/* ── Charts row 2 ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Area: Hendelser over tid */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Innkast over tid{" "}
-                {timeFilter
-                  ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
-                  : ""}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={filteredEventsOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip
-                    defaultIndex={0}
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null;
-                      const val = payload[0].value;
-                      const idx = filteredEventsOverTime.findIndex(
-                        (e) => e.date === label,
-                      );
-                      return (
-                        <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                          <p className="font-semibold">{label}</p>
-                          <p className="text-muted-foreground">
-                            Dag {idx + 1}: {val} hendelser
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="antall"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+                <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <RefreshCw className="mt-0.5 h-4 w-4 text-slate-500" />
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      Siste hendelse
+                    </p>
+                    <p>
+                      {sisteHendelse
+                        ? new Date(sisteHendelse).toLocaleDateString("nb-NO")
+                        : "Ingen data"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
 
-          {/* Pie: Kast per fraksjon */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Kast per fraksjon{" "}
-                {timeFilter
-                  ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
-                  : ""}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={kastPerFraksjon}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={110}
-                    paddingAngle={2}
-                  >
-                    {kastPerFraksjon.map((_, i) => (
-                      <Cell
-                        key={`cell-f-${i}`}
-                        fill={COLORS[i % COLORS.length]}
-                      />
+          <section className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Siste beholdere</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {sisteBeholdere.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    Ingen beholdere ble funnet.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {sisteBeholdere.map((beholder) => (
+                      <div
+                        key={beholder.id}
+                        className="rounded-2xl border bg-white p-4"
+                      >
+                        <p className="font-semibold text-slate-900">
+                          {beholder.stasjonNavn}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {beholder.anleggNavn}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {beholder.fraksjonNavn}
+                        </p>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip
-                    defaultIndex={0}
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      const idx = kastPerFraksjon.findIndex(
-                        (f) => f.name === d.name,
-                      );
-                      const total = kastPerFraksjon.reduce(
-                        (s, f) => s + f.value,
-                        0,
-                      );
-                      const pct = total
-                        ? ((d.value / total) * 100).toFixed(1)
-                        : "0";
-                      return (
-                        <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                          <p className="font-semibold">
-                            #{idx + 1} {d.name}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {d.value} kast ({pct}%)
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Snarveier</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  className="w-full justify-between"
+                  variant="outline"
+                  asChild
+                >
+                  <Link href="/beholdere">
+                    Åpne beholderliste
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  className="w-full justify-between"
+                  variant="outline"
+                  asChild
+                >
+                  <Link href="/sistehendelser">
+                    Se hendelser
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  className="w-full justify-between"
+                  variant="outline"
+                  asChild
+                >
+                  <Link href="/adgangskontroll">
+                    Gå til adgangskontroll
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
         </div>
-
-        {/* ── Sorteringsgrad per anlegg ── */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>
-                Sorteringsgrad per anlegg{" "}
-                {timeFilter
-                  ? `(${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
-                  : ""}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Andel kast som er kildesortert (ikke restavfall)
-              </p>
-            </div>
-            <div className="flex gap-1">
-              <Button
-                variant={sorteringView === "bar" ? "default" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setSorteringView("bar")}
-              >
-                <BarChart3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={sorteringView === "pie" ? "default" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setSorteringView("pie")}
-              >
-                <PieChartIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={sorteringView === "radar" ? "default" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setSorteringView("radar")}
-              >
-                <Activity className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="h-96">
-            {sorteringView === "bar" && (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={sorteringsgradPerAnlegg}
-                  layout="vertical"
-                  margin={{ left: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 100]} unit="%" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    tick={{ fontSize: 12 }}
-                    width={140}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      return (
-                        <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                          <p className="font-semibold">{d.name}</p>
-                          <p className="text-emerald-600">
-                            Sorteringsgrad: {d.grad}%
-                          </p>
-                          <p className="text-muted-foreground">
-                            Sortert: {d.sortert} · Restavfall: {d.restavfall} ·
-                            Totalt: {d.totalt}
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar dataKey="grad" fill="#10b981" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-            {sorteringView === "pie" && (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={sorteringsgradPerAnlegg}
-                    dataKey="grad"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={120}
-                    paddingAngle={2}
-                  >
-                    {sorteringsgradPerAnlegg.map((_, i) => (
-                      <Cell
-                        key={`sort-cell-${i}`}
-                        fill={COLORS[i % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      return (
-                        <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                          <p className="font-semibold">{d.name}</p>
-                          <p className="text-emerald-600">
-                            Sorteringsgrad: {d.grad}%
-                          </p>
-                          <p className="text-muted-foreground">
-                            Sortert: {d.sortert} · Restavfall: {d.restavfall} ·
-                            Totalt: {d.totalt}
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-            {sorteringView === "radar" && (
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart
-                  data={sorteringsgradPerAnlegg}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="70%"
-                >
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <PolarRadiusAxis
-                    angle={90}
-                    domain={[0, 100]}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = payload[0].payload;
-                      return (
-                        <div className="rounded-lg border bg-background p-3 shadow-md text-sm">
-                          <p className="font-semibold">{d.name}</p>
-                          <p className="text-emerald-600">
-                            Sorteringsgrad: {d.grad}%
-                          </p>
-                          <p className="text-muted-foreground">
-                            Sortert: {d.sortert} · Restavfall: {d.restavfall} ·
-                            Totalt: {d.totalt}
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Radar
-                    dataKey="grad"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.3}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ── Alle anlegg ── */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Alle anlegg ({anleggOversikt.length})
-              {timeFilter
-                ? ` (${TIME_FILTERS.find((f) => f.key === timeFilter)?.label})`
-                : ""}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-8 gap-y-2">
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b">
-                Anlegg
-              </div>
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b text-right">
-                Beholdere
-              </div>
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b text-right">
-                Kast
-              </div>
-              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b text-right">
-                Sortering
-              </div>
-              {(showAllAnlegg
-                ? anleggOversikt
-                : anleggOversikt.slice(0, 4)
-              ).map((a) => {
-                const sg = sorteringsgradPerAnlegg.find(
-                  (s) => s.name === a.name,
-                );
-                return (
-                  <Fragment key={a.name}>
-                    <div className="text-sm font-medium truncate">{a.name}</div>
-                    <div className="text-sm text-muted-foreground text-right">
-                      {a.beholdere}
-                    </div>
-                    <div className="text-sm text-muted-foreground text-right">
-                      {a.kast}
-                    </div>
-                    <div className="text-sm text-right font-medium text-emerald-600">
-                      {sg ? `${sg.grad}%` : "–"}
-                    </div>
-                  </Fragment>
-                );
-              })}
-            </div>
-            {anleggOversikt.length > 4 && (
-              <button
-                className="mt-4 text-sm text-primary hover:underline cursor-pointer"
-                onClick={() => setShowAllAnlegg(!showAllAnlegg)}
-              >
-                {showAllAnlegg
-                  ? "Vis mindre"
-                  : `Vis mer (${anleggOversikt.length - 4} til)`}
-              </button>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

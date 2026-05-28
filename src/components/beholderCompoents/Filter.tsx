@@ -66,19 +66,30 @@ export default function Filter({ data = [], value, onChange }: FilterProps) {
           className="text-xs font-semibold uppercase cursor-pointer"
           variant="outline"
         >
-          Filter <Funnel className="ml-2" size={16} />
+          Filtrer <Funnel className="ml-2" size={16} />
         </Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Filter</SheetTitle>
+          <SheetTitle>Filtre</SheetTitle>
           <SheetDescription>
-            Filter beholdere etter ulike kriterier
+            Bruk enkle filtre for å snevre inn listen.
           </SheetDescription>
         </SheetHeader>
 
         <div className="grid p-5 flex-1 auto-rows-min gap-6 py-4">
-          {/* Station Filter */}
+          <div className="grid gap-3">
+            <Label htmlFor="externalSystem">Eksternt system</Label>
+            <Input
+              id="externalSystem"
+              placeholder="Søk etter system..."
+              value={value.externalSystem}
+              onChange={(event) =>
+                onChange({ ...value, externalSystem: event.target.value })
+              }
+            />
+          </div>
+
           <div className="grid gap-3">
             <Label htmlFor="station">Stasjon</Label>
             <Input
@@ -91,7 +102,6 @@ export default function Filter({ data = [], value, onChange }: FilterProps) {
             />
           </div>
 
-          {/* Anlegg Filter */}
           <div className="grid gap-3">
             <Label htmlFor="anlegg">Anlegg</Label>
             <Input
@@ -104,12 +114,11 @@ export default function Filter({ data = [], value, onChange }: FilterProps) {
             />
           </div>
 
-          {/* Fraksjon Checkboxes */}
           <div className="grid gap-3">
-            <Label>Fraksjon Type</Label>
+            <Label>Fraksjoner</Label>
             <div className="space-y-2">
               {typeAvFall.map((fraksjon, index) => (
-                <div key={index} className="flex items-center space-x-2">
+                <div key={index} className="flex items-center gap-2">
                   <Checkbox
                     id={`fraksjon-${index}`}
                     checked={value.fraksjoner.includes(fraksjon)}
@@ -131,7 +140,7 @@ export default function Filter({ data = [], value, onChange }: FilterProps) {
 
         <SheetFooter>
           <Button type="button" className="w-full" onClick={handleReset}>
-            Reset Filter
+            Nullstill
           </Button>
           <SheetClose asChild>
             <Button variant="outline" className="w-full">

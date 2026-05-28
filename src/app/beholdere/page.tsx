@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import getAll from "@/Actions/getAll";
 import { BrikkeContainer } from "@/components/beholderCompoents/BrikkeContainer";
 import { BrikkeHeader } from "@/components/beholderCompoents/BrikkeHeader";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import Filter, { FilterValues } from "@/components/beholderCompoents/Filter";
 import { Button } from "@/components/ui/button";
-import { MapPinned, Loader2 } from "lucide-react";
+import { Building2, Loader2, MapPinned, Package } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -55,6 +55,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<keyof BeholderData>("id");
   const [sortAsc, setSortAsc] = useState(true);
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [filters, setFilters] = useState<FilterValues>({
     externalSystem: "",
     location: "",
@@ -71,60 +72,65 @@ export default function Page() {
           setError(res.error);
         } else {
           setData(res.data);
-          console.log("Fetched data:", res.data); // Legg til logging for å se dataen som hentes inn
+          setLastFetched(new Date());
         }
       } catch (error) {
-        setError("Feil ved lasting av data");
+        setError("Klarte ikke å laste beholdere");
         console.error("Fetch error:", error);
       } finally {
         setLoading(false);
       }
     }
+
     fetchData();
   }, []);
 
-  const filterVerdi = (value: string) => value.trim().toLowerCase();
+  const normaliser = (value: string) => value.trim().toLowerCase();
 
-  // Filtrer data: først universelt søk fra header, så spesifikke filtre
-  const afterGlobalSearch = globalQuery
-    ? data.filter((item) => {
-        const searchable = [
-          item.id,
-          item.externalSystem,
-          item.locationName,
-          item.stasjonNavn,
-          item.fraksjonNavn,
-          item.anleggNavn,
-        ]
-          .join(" ")
-          .toLowerCase();
-        return searchable.includes(globalQuery);
-      })
-    : data;
+  const filteredData = useMemo(() => {
+    const base = globalQuery
+      ? data.filter((item) => {
+          const searchable = [
+            item.id,
+            item.externalSystem,
+            item.locationName,
+            item.stasjonNavn,
+            item.fraksjonNavn,
+            item.anleggNavn,
+          ]
+            .join(" ")
+            .toLowerCase();
 
-  const filteredData = afterGlobalSearch.filter((item) => {
-    const externalSystemMatch =
-      filterVerdi(filters.externalSystem) === "" ||
-      item.externalSystem
-        .toLowerCase()
-        .includes(filterVerdi(filters.externalSystem));
+          return searchable.includes(globalQuery);
+        })
+      : data;
 
-    const stationMatch =
-      filterVerdi(filters.station) === "" ||
-      item.stasjonNavn.toLowerCase().includes(filterVerdi(filters.station));
+    return base.filter((item) => {
+      const externalSystemMatch =
+        normaliser(filters.externalSystem) === "" ||
+        item.externalSystem
+          .toLowerCase()
+          .includes(normaliser(filters.externalSystem));
 
-    const anleggMatch =
-      filterVerdi(filters.anlegg) === "" ||
-      item.anleggNavn.toLowerCase().includes(filterVerdi(filters.anlegg));
+      const stationMatch =
+        normaliser(filters.station) === "" ||
+        item.stasjonNavn.toLowerCase().includes(normaliser(filters.station));
 
-    const fraksjonMatch =
-      filters.fraksjoner.length === 0 ||
-      filters.fraksjoner.includes(item.fraksjonNavn);
+      const anleggMatch =
+        normaliser(filters.anlegg) === "" ||
+        item.anleggNavn.toLowerCase().includes(normaliser(filters.anlegg));
 
-    return externalSystemMatch && stationMatch && anleggMatch && fraksjonMatch;
-  });
+      const fraksjonMatch =
+        filters.fraksjoner.length === 0 ||
+        filters.fraksjoner.includes(item.fraksjonNavn);
 
-  const beholdereWithCoords: MapBeholder[] = useMemo(
+      return (
+        externalSystemMatch && stationMatch && anleggMatch && fraksjonMatch
+      );
+    });
+  }, [data, filters, globalQuery]);
+
+  const beholdereMedKoordinater: MapBeholder[] = useMemo(
     () =>
       filteredData
         .filter(
@@ -141,23 +147,25 @@ export default function Page() {
     [filteredData],
   );
 
-  // Sortér filtrert data basert på sortBy og sortAsc
-  const sortedData = [...filteredData].sort((a, b) => {
-    const aVerdi = a[sortBy];
-    const bVerdi = b[sortBy];
+  const sortedData = useMemo(() => {
+    return [...filteredData].sort((a, b) => {
+      const aVerdi = a[sortBy];
+      const bVerdi = b[sortBy];
 
-    if (typeof aVerdi === "string" && typeof bVerdi === "string") {
-      return sortAsc
-        ? aVerdi.localeCompare(bVerdi)
-        : bVerdi.localeCompare(aVerdi);
-    }
-    if (typeof aVerdi === "number" && typeof bVerdi === "number") {
-      return sortAsc ? aVerdi - bVerdi : bVerdi - aVerdi;
-    }
-    return 0;
-  });
+      if (typeof aVerdi === "string" && typeof bVerdi === "string") {
+        return sortAsc
+          ? aVerdi.localeCompare(bVerdi)
+          : bVerdi.localeCompare(aVerdi);
+      }
 
-  // Håndter kolonne-klikk: bytt sortering eller retning
+      if (typeof aVerdi === "number" && typeof bVerdi === "number") {
+        return sortAsc ? aVerdi - bVerdi : bVerdi - aVerdi;
+      }
+
+      return 0;
+    });
+  }, [filteredData, sortAsc, sortBy]);
+
   const handleSort = (column: string) => {
     if (sortBy === column) {
       setSortAsc(!sortAsc);
@@ -167,49 +175,123 @@ export default function Page() {
     }
   };
 
+  const totalBeholdere = data.length;
+  const antallMedKartpunkt = beholdereMedKoordinater.length;
+  const antallAnlegg = useMemo(
+    () => new Set(data.map((item) => item.anleggNavn)).size,
+    [data],
+  );
+
+  const sistOppdatert = lastFetched
+    ? lastFetched.toLocaleString("nb-NO")
+    : "Ukjent";
+
   if (loading) return <div className="p-8">Laster...</div>;
   if (error) return <div className="p-8 text-red-600">Feil: {error}</div>;
 
   return (
-    <div className="container mx-auto pl-60 pt-15 pr-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Viser <span className="font-semibold">{sortedData.length}</span> av{" "}
-            <span className="font-semibold">{data.length}</span> beholdere
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto space-y-6 px-6 py-10 lg:pl-60">
+        <section className="rounded-3xl border bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                Beholdere
+              </span>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                Enkel oversikt over beholdere
+              </h1>
+              <p className="text-sm leading-6 text-slate-600 md:text-base">
+                Her kan du filtrere, sortere og åpne kartet. Alt er holdt
+                enkelt, så det er lett å forstå.
+              </p>
+            </div>
 
-      <Filter data={data} value={filters} onChange={setFilters} />
-      <Drawer>
-        <DrawerTrigger asChild>
-          <Button
-            className="text-xs ml-5 font-semibold uppercase cursor-pointer"
-            variant="outline"
-          >
-            Kart <MapPinned />
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent className="h-[85vh]">
-          <DrawerHeader>
-            <DrawerTitle>
-              Beholdere på kart ({beholdereWithCoords.length})
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="flex-1 px-4 pb-4 h-full">
-            <MapLocations beholdere={beholdereWithCoords} />
+            <div className="grid gap-3 sm:grid-cols-3 lg:max-w-4xl">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-500">Totalt antall</p>
+                    <Package className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <p className="mt-3 text-3xl font-bold text-slate-900">
+                    {totalBeholdere}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-500">Har kartpunkt</p>
+                    <MapPinned className="h-4 w-4 text-sky-600" />
+                  </div>
+                  <p className="mt-3 text-3xl font-bold text-slate-900">
+                    {antallMedKartpunkt}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-500">Anlegg</p>
+                    <Building2 className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <p className="mt-3 text-3xl font-bold text-slate-900">
+                    {antallAnlegg}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </DrawerContent>
-      </Drawer>
-      <Card className="w-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-        <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
-        <div className="max-h-[70vh] overflow-y-auto">
-          {sortedData.map((item: BeholderData) => (
-            <BrikkeContainer key={item.id} data={item} />
-          ))}
+
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+            <span>Sist oppdatert: {sistOppdatert}</span>
+            <span>
+              Viser {sortedData.length} av {data.length}
+            </span>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <Filter data={data} value={filters} onChange={setFilters} />
+
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button className="w-full sm:w-auto" variant="outline">
+                Vis kart
+                <MapPinned className="ml-2 h-4 w-4" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="h-[85vh]">
+              <DrawerHeader>
+                <DrawerTitle>
+                  Beholdere på kart ({beholdereMedKoordinater.length})
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="h-full flex-1 px-4 pb-4">
+                <MapLocations beholdere={beholdereMedKoordinater} />
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
-      </Card>
+
+        <Card className="overflow-hidden border border-border bg-card shadow-sm">
+          <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
+          <div className="max-h-[70vh] overflow-y-auto">
+            {sortedData.length === 0 ? (
+              <div className="p-8 text-sm text-slate-500">
+                Ingen beholdere passer til filtrene.
+              </div>
+            ) : (
+              sortedData.map((item: BeholderData) => (
+                <BrikkeContainer key={item.id} data={item} />
+              ))
+            )}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

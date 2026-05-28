@@ -4,8 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix for manglende standard-ikoner i webpack/Next.js
-const defaultIcon = L.icon({
+const markerIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -13,7 +12,7 @@ const defaultIcon = L.icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
-L.Marker.prototype.options.icon = defaultIcon;
+L.Marker.prototype.options.icon = markerIcon;
 
 export default function Map({ lat, lng }: { lat: number; lng: number }) {
   return (
@@ -27,7 +26,7 @@ export default function Map({ lat, lng }: { lat: number; lng: number }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <Marker position={[lat, lng]}>
-        <Popup>Beholder plassering</Popup>
+        <Popup>Her ligger beholderen</Popup>
       </Marker>
     </MapContainer>
   );

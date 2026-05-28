@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "../../../node_modules/@hookform/resolvers/zod/dist/zod.js";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
@@ -82,7 +82,6 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
       )
     : avfallstyper;
 
-  // Reset avfallstyper when station changes (auto-check all available)
   const prevStasjon = React.useRef(valgtStasjon);
   React.useEffect(() => {
     if (valgtStasjon !== prevStasjon.current) {
@@ -97,18 +96,17 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
   }
 
   return (
-    <Card className="w-4/5">
+    <Card className="w-full max-w-4xl">
       <CardHeader>
-        <CardTitle>Legg til ny bruker</CardTitle>
+        <CardTitle>Ny bruker</CardTitle>
         <CardDescription>
-          Fyll ut skjemaet for å legge til en ny bruker.
+          Fyll ut feltene for å legge til en ny bruker.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form id="form-ny-bruker" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
-            {/* Fornavn og Etternavn */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 md:grid-cols-2">
               <Controller
                 name="fornavn"
                 control={form.control}
@@ -149,8 +147,7 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
               />
             </div>
 
-            {/* Mobilnummer og E-post */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 md:grid-cols-2">
               <Controller
                 name="mobilNr"
                 control={form.control}
@@ -192,8 +189,7 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
               />
             </div>
 
-            {/* Gatenavn og Husnummer */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 md:grid-cols-3">
               <Controller
                 name="gatenavn"
                 control={form.control}
@@ -232,8 +228,7 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
               />
             </div>
 
-            {/* Postkode og Sted */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 md:grid-cols-3">
               <Controller
                 name="postKode"
                 control={form.control}
@@ -279,7 +274,6 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
               />
             </div>
 
-            {/* Stasjon */}
             <Controller
               name="stasjon"
               control={form.control}
@@ -323,7 +317,9 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
                               field.onChange([...field.value, type.id]);
                             } else {
                               field.onChange(
-                                field.value.filter((v) => v !== type.id),
+                                field.value.filter(
+                                  (v: string) => v !== type.id,
+                                ),
                               );
                             }
                           }}
