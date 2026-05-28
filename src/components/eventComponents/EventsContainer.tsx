@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import { CalendarClock } from "lucide-react";
 
 interface BeholderData {
   id: string;
