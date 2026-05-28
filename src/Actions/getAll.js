@@ -1,6 +1,20 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { mockBeholdere } from "@/data/mockBeholdere";
+
+function mergeById(primary, fallback) {
+  const seen = new Set();
+  const merged = [];
+
+  for (const item of [...primary, ...fallback]) {
+    if (!item?.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    merged.push(item);
+  }
+
+  return merged;
+}
 
 export async function revalidateAdminView() {
   revalidatePath("/adminview");
@@ -28,10 +42,11 @@ export default async function getAll() {
     }
 
     const data = await res.json();
+    const mergedData = mergeById(data, mockBeholdere);
 
-    return { data, error: null };
+    return { data: mergedData, error: null };
   } catch (error) {
     console.error("Error fetching data:", error);
-    return { data: null, error: error.message };
+    return { data: mockBeholdere, error: null };
   }
 }
