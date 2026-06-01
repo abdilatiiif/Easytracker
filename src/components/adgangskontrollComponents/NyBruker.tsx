@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { zodResolver } from "../../../node_modules/@hookform/resolvers/zod/dist/zod.js";
+
 import { Controller, useForm, useWatch } from "react-hook-form";
-import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,27 +38,35 @@ const avfallstyper = [
   { id: "Matavfall", label: "Matavfall" },
 ];
 
-const formSchema = z.object({
-  fornavn: z.string().min(2, "Fornavn må være minst 2 tegn."),
-  etternavn: z.string().min(2, "Etternavn må være minst 2 tegn."),
-  mobilNr: z.string().regex(/^\d{8}$/, "Mobilnummer må være 8 siffer."),
-  epost: z.string().email("Ugyldig e-postadresse."),
-  gatenavn: z.string().min(2, "Gatenavn må være minst 2 tegn."),
-  husNr: z.string().min(1, "Husnummer er påkrevd."),
-  postKode: z.string().regex(/^\d{4}$/, "Postkode må være 4 siffer."),
-  sted: z.string().min(2, "Sted må være minst 2 tegn."),
-  stasjon: z.string().min(1, "Velg en stasjon."),
-  avfallstyper: z.array(z.string()).min(1, "Velg minst én avfallstype."),
-});
+// bruker data kan endres OBS - types
+interface NyBrukerForm {
+  fornavn: string;
+  etternavn: string;
+  mobilNr: string;
+  epost: string;
+  gatenavn: string;
+  husNr: string;
+  postKode: string;
+  sted: string;
+  stasjon: string;
+  avfallstyper: string[];
+}
 
 interface NyBrukerProps {
   stasjoner: string[];
   stasjonAvfallstyper: Record<string, string[]>;
 }
 
+// bruker data kan endres OBS - type
 export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
-  const form = useForm<NyBrukerForm>({
-    resolver: zodResolver(formSchema),
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<NyBrukerForm>({
     defaultValues: {
       fornavn: "",
       etternavn: "",
@@ -74,7 +81,8 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
     },
   });
 
-  const valgtStasjon = useWatch({ control: form.control, name: "stasjon" });
+  //følger med på live update
+  const valgtStasjon = useWatch({ control, name: "stasjon" });
 
   const tilgjengeligeAvfallstyper = valgtStasjon
     ? avfallstyper.filter((t) =>
@@ -82,16 +90,12 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
       )
     : avfallstyper;
 
-  const prevStasjon = React.useRef(valgtStasjon);
   React.useEffect(() => {
-    if (valgtStasjon !== prevStasjon.current) {
-      prevStasjon.current = valgtStasjon;
-      const ids = tilgjengeligeAvfallstyper.map((t) => t.id);
-      form.setValue("avfallstyper", ids);
-    }
-  }, [valgtStasjon, tilgjengeligeAvfallstyper, form]);
+    const ids = tilgjengeligeAvfallstyper.map((t) => t.id);
+    setValue("avfallstyper", ids);
+  }, [valgtStasjon, tilgjengeligeAvfallstyper, setValue]);
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  function onSubmit(data: NyBrukerForm) {
     console.log("Ny bruker:", data);
   }
 
@@ -104,179 +108,152 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form id="form-ny-bruker" onSubmit={form.handleSubmit(onSubmit)}>
+        <form id="form-ny-bruker" onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <div className="grid gap-3 md:grid-cols-2">
-              <Controller
-                name="fornavn"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ny-bruker-fornavn">Fornavn</FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-fornavn"
-                      placeholder="Ola"
-                      autoComplete="given-name"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="etternavn"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ny-bruker-etternavn">
-                      Etternavn
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-etternavn"
-                      placeholder="Nordmann"
-                      autoComplete="family-name"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+              <Field data-invalid={!!errors.fornavn}>
+                <FieldLabel htmlFor="ny-bruker-fornavn">Fornavn</FieldLabel>
+                <Input
+                  id="ny-bruker-fornavn"
+                  placeholder="Ola"
+                  autoComplete="given-name"
+                  {...register("fornavn", {
+                    required: "Fornavn er påkrevd.",
+                    minLength: {
+                      value: 2,
+                      message: "Fornavn må være minst 2 tegn.",
+                    },
+                  })}
+                />
+                {errors.fornavn && <FieldError errors={[errors.fornavn]} />}
+              </Field>
+
+              <Field data-invalid={!!errors.etternavn}>
+                <FieldLabel htmlFor="ny-bruker-etternavn">Etternavn</FieldLabel>
+                <Input
+                  id="ny-bruker-etternavn"
+                  placeholder="Nordmann"
+                  autoComplete="family-name"
+                  {...register("etternavn", {
+                    required: "Etternavn er påkrevd.",
+                    minLength: {
+                      value: 2,
+                      message: "Etternavn må være minst 2 tegn.",
+                    },
+                  })}
+                />
+                {errors.etternavn && <FieldError errors={[errors.etternavn]} />}
+              </Field>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <Controller
-                name="mobilNr"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ny-bruker-mobil">Mobil nr.</FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-mobil"
-                      placeholder="12345678"
-                      inputMode="tel"
-                      maxLength={8}
-                      autoComplete="tel"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="epost"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ny-bruker-epost">E-post</FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-epost"
-                      type="email"
-                      placeholder="ola@eksempel.no"
-                      autoComplete="email"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+              <Field data-invalid={!!errors.mobilNr}>
+                <FieldLabel htmlFor="ny-bruker-mobil">Mobil nr.</FieldLabel>
+                <Input
+                  id="ny-bruker-mobil"
+                  placeholder="12345678"
+                  inputMode="tel"
+                  maxLength={8}
+                  autoComplete="tel"
+                  {...register("mobilNr", {
+                    required: "Mobilnummer er påkrevd.",
+                    pattern: {
+                      value: /^\d{8}$/,
+                      message: "Mobilnummer må være 8 siffer.",
+                    },
+                  })}
+                />
+                {errors.mobilNr && <FieldError errors={[errors.mobilNr]} />}
+              </Field>
+
+              <Field data-invalid={!!errors.epost}>
+                <FieldLabel htmlFor="ny-bruker-epost">E-post</FieldLabel>
+                <Input
+                  id="ny-bruker-epost"
+                  type="email"
+                  placeholder="ola@eksempel.no"
+                  autoComplete="email"
+                  {...register("epost", {
+                    required: "E-post er påkrevd.",
+                  })}
+                />
+                {errors.epost && <FieldError errors={[errors.epost]} />}
+              </Field>
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <Controller
-                name="gatenavn"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field
-                    data-invalid={fieldState.invalid}
-                    className="col-span-2"
-                  >
-                    <FieldLabel htmlFor="ny-bruker-gatenavn">
-                      Gatenavn
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-gatenavn"
-                      placeholder="Storgata"
-                      autoComplete="address-line1"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="husNr"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ny-bruker-husnr">Hus nr.</FieldLabel>
-                    <Input {...field} id="ny-bruker-husnr" placeholder="1" />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+              <Field data-invalid={!!errors.gatenavn} className="col-span-2">
+                <FieldLabel htmlFor="ny-bruker-gatenavn">Gatenavn</FieldLabel>
+                <Input
+                  id="ny-bruker-gatenavn"
+                  placeholder="Storgata"
+                  autoComplete="address-line1"
+                  {...register("gatenavn", {
+                    required: "Gatenavn er påkrevd.",
+                    minLength: {
+                      value: 2,
+                      message: "Gatenavn må være minst 2 tegn.",
+                    },
+                  })}
+                />
+                {errors.gatenavn && <FieldError errors={[errors.gatenavn]} />}
+              </Field>
+
+              <Field data-invalid={!!errors.husNr}>
+                <FieldLabel htmlFor="ny-bruker-husnr">Hus nr.</FieldLabel>
+                <Input
+                  id="ny-bruker-husnr"
+                  placeholder="1"
+                  {...register("husNr", {
+                    required: "Husnummer er påkrevd.",
+                  })}
+                />
+                {errors.husNr && <FieldError errors={[errors.husNr]} />}
+              </Field>
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <Controller
-                name="postKode"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="ny-bruker-postkode">
-                      Postkode
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-postkode"
-                      placeholder="0001"
-                      inputMode="numeric"
-                      maxLength={4}
-                      autoComplete="postal-code"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="sted"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field
-                    data-invalid={fieldState.invalid}
-                    className="col-span-2"
-                  >
-                    <FieldLabel htmlFor="ny-bruker-sted">Sted</FieldLabel>
-                    <Input
-                      {...field}
-                      id="ny-bruker-sted"
-                      placeholder="Oslo"
-                      autoComplete="address-level2"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
+              <Field data-invalid={!!errors.postKode}>
+                <FieldLabel htmlFor="ny-bruker-postkode">Postkode</FieldLabel>
+                <Input
+                  id="ny-bruker-postkode"
+                  placeholder="0001"
+                  inputMode="numeric"
+                  maxLength={4}
+                  autoComplete="postal-code"
+                  {...register("postKode", {
+                    required: "Postkode er påkrevd.",
+                    pattern: {
+                      value: /^\d{4}$/,
+                      message: "Postkode må være 4 siffer.",
+                    },
+                  })}
+                />
+                {errors.postKode && <FieldError errors={[errors.postKode]} />}
+              </Field>
+
+              <Field data-invalid={!!errors.sted} className="col-span-2">
+                <FieldLabel htmlFor="ny-bruker-sted">Sted</FieldLabel>
+                <Input
+                  id="ny-bruker-sted"
+                  placeholder="Oslo"
+                  autoComplete="address-level2"
+                  {...register("sted", {
+                    required: "Sted er påkrevd.",
+                    minLength: {
+                      value: 2,
+                      message: "Sted må være minst 2 tegn.",
+                    },
+                  })}
+                />
+                {errors.sted && <FieldError errors={[errors.sted]} />}
+              </Field>
             </div>
 
             <Controller
               name="stasjon"
-              control={form.control}
+              control={control}
+              rules={{ required: "Velg en stasjon." }}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Stasjon</FieldLabel>
@@ -302,7 +279,11 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
             {/* Avfallstyper */}
             <Controller
               name="avfallstyper"
-              control={form.control}
+              control={control}
+              rules={{
+                validate: (value) =>
+                  value.length > 0 || "Velg minst én avfallstype.",
+              }}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Avfallstyper</FieldLabel>
@@ -344,7 +325,7 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
       </CardContent>
       <CardFooter>
         <Field orientation="horizontal">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
+          <Button type="button" variant="outline" onClick={() => reset()}>
             Nullstill
           </Button>
           <Button type="submit" form="form-ny-bruker">
@@ -355,5 +336,3 @@ export function NyBruker({ stasjoner, stasjonAvfallstyper }: NyBrukerProps) {
     </Card>
   );
 }
-
-type NyBrukerForm = z.infer<typeof formSchema>;
