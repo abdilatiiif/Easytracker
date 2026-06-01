@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/drawer";
 import type { MapBeholder } from "@/components/beholderCompoents/MapLocations";
 
+// Dynamisk import av MapLocations for å unngå SSR-problemer med Leaflet
 const MapLocations = dynamic(
   () => import("@/components/beholderCompoents/MapLocations"),
   {
@@ -130,6 +131,7 @@ export default function Page() {
     });
   }, [data, filters, globalQuery]);
 
+  // usememo for å unngå unødvendige beregninger av beholdere med koordinater ved hver render
   const beholdereMedKoordinater: MapBeholder[] = useMemo(
     () =>
       filteredData
@@ -278,6 +280,9 @@ export default function Page() {
         </div>
 
         <Card className="overflow-hidden border border-border bg-card shadow-sm">
+
+          {// BrikkeHeader håndterer sortering, og sender info tilbake til Page som sorterer dataene
+          } 
           <BrikkeHeader onSort={handleSort} sortBy={sortBy} sortAsc={sortAsc} />
           <div className="max-h-[70vh] overflow-y-auto">
             {sortedData.length === 0 ? (

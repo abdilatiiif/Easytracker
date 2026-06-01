@@ -35,6 +35,7 @@ export default function Home() {
 
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
+  // henter data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -58,6 +59,7 @@ export default function Home() {
   }, []);
 
   const totalBeholdere = beholdere.length;
+
   const antallAnlegg = useMemo(
     () => new Set(beholdere.map((b) => b.anleggNavn)).size,
     [beholdere],
@@ -68,8 +70,10 @@ export default function Home() {
     [stats],
   );
 
+  // finner datoen for siste hendelse
   const sisteHendelse = stats?.eventsOverTime.at(-1)?.date ?? null;
 
+  // tar de 5 siste beholderne for å vise på forsiden
   const sisteBeholdere = useMemo(() => beholdere.slice(0, 5), [beholdere]);
 
   if (loading) {

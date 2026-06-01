@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// husk eventypes endres
 interface EventData {
   beholderId: string;
   eventType: string;
@@ -124,6 +125,7 @@ function Page() {
     fetchEvents();
   }, []);
 
+  // kan endres via API, så må følge med på endringer
   const eventTypes = useMemo(
     () => [...new Set(events.map((e) => e.eventType))].sort(),
     [events],
@@ -139,45 +141,59 @@ function Page() {
   };
 
   const filteredEvents = useMemo(() => {
-    let filtered = events;
+    const query = search.trim().toLowerCase();
+    const fromTime = dateFrom ? new Date(dateFrom).getTime() : null;
+    const toTime = dateTo
+      ? new Date(`${dateTo}T23:59:59.999`).getTime()
+      : null;
 
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      filtered = filtered.filter((e) => e.beholderId.toLowerCase().includes(q));
-    }
-
-    if (eventTypeFilter !== "all") {
-      filtered = filtered.filter((e) => e.eventType === eventTypeFilter);
-    }
-
-    if (dateFrom) {
-      const from = new Date(dateFrom).getTime();
-      filtered = filtered.filter(
-        (e) => new Date(e.timestamp).getTime() >= from,
-      );
-    }
-
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(
-        (e) => new Date(e.timestamp).getTime() <= to.getTime(),
-      );
-    }
-
-    filtered = [...filtered].sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === "timestamp") {
-        cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-      } else if (sortKey === "eventType" || sortKey === "beholderId") {
-        cmp = a[sortKey].localeCompare(b[sortKey]);
-      } else if (sortKey === "batteryLevel" || sortKey === "fillLevel") {
-        cmp = (a[sortKey] ?? -1) - (b[sortKey] ?? -1);
+    const filtered = events.filter((event) => {
+      if (query && !event.beholderId.toLowerCase().includes(query)) {
+        return false;
       }
-      return sortDir === "asc" ? cmp : -cmp;
+
+      if (eventTypeFilter !== "all" && event.eventType !== eventTypeFilter) {
+        return false;
+      }
+
+      const eventTime = new Date(event.timestamp).getTime();
+
+      if (fromTime !== null && eventTime < fromTime) {
+        return false;
+      }
+
+      if (toTime !== null && eventTime > toTime) {
+        return false;
+      }
+
+      return true;
     });
 
-    return filtered;
+    return filtered.sort((a, b) => {
+      let result = 0;
+
+      if (sortKey === "timestamp") {
+        result = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      }
+
+      if (sortKey === "eventType") {
+        result = a.eventType.localeCompare(b.eventType);
+      }
+
+      if (sortKey === "beholderId") {
+        result = a.beholderId.localeCompare(b.beholderId);
+      }
+
+      if (sortKey === "batteryLevel") {
+        result = (a.batteryLevel ?? -1) - (b.batteryLevel ?? -1);
+      }
+
+      if (sortKey === "fillLevel") {
+        result = (a.fillLevel ?? -1) - (b.fillLevel ?? -1);
+      }
+
+      return sortDir === "asc" ? result : -result;
+    });
   }, [events, search, eventTypeFilter, sortKey, sortDir, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / perPage));
